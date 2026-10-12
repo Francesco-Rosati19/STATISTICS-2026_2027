@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECC Scalar Multiplication Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #06b6d4;
+            --accent-secondary: #3b82f6;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            background: var(--bg-card);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom scrollbar for logs */
+        .scroller::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scroller::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5); 
+            border-radius: 4px;
+        }
+        .scroller::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        .scroller::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col">
+
+    <header class="max-w-7xl mx-auto w-full mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+                    Elliptic-Curve Scalar Multiplication
+                </h1>
+                <p class="text-slate-400 mt-2">
+                    Visualizing <span class="mono text-cyan-300">Q = k * G</span> on toy curve <span class="mono text-cyan-300">y² = x³ + 7 (mod 17)</span>
+                </p>
+            </div>
+            <div class="text-left md:text-right bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                <div class="text-sm text-slate-400">Field (p): <span class="mono text-white">17</span></div>
+                <div class="text-sm text-slate-400">Curve Params: <span class="mono text-white">a = 0, b = 7</span></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <div class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- Controls Card -->
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+                <h2 class="text-xl font-semibold mb-4 text-white">Parameters</h2>
+                <div class="flex flex-col gap-4">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="privateKey" class="block text-sm font-medium text-slate-300 mb-1">
+                                Private Key (k)
+                            </label>
+                            <input type="number" id="privateKey" value="6" min="1" max="100" 
+                                class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white mono text-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors">
+                        </div>
+                        <div>
+                            <label for="basePoint" class="block text-sm font-medium text-slate-300 mb-1">
+                                Base Point (G)
+                            </label>
+                            <select id="basePoint" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2.5 text-white mono text-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-2">
+                        <button id="startBtn" 
+                            class="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold py-2.5 px-6 rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Calculate Public Key
+                        </button>
+                        <button id="resetBtn" 
+                            class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md transition-all active:scale-95">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden flex flex-col flex-grow min-h-[300px] max-h-[400px]">
+                <div class="px-6 py-4 border-b border-slate-700 bg-slate-800/80 backdrop-blur">
+                    <h3 class="text-lg font-semibold">Calculation Steps</h3>
+                </div>
+                <div class="p-4 overflow-y-auto scroller flex-grow" id="logContainer">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-slate-700">
+                                <th class="pb-2 font-medium w-1/4">Step</th>
+                                <th class="pb-2 font-medium w-3/4">Point Coordinates</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calcLog" class="mono text-slate-300">
+                            <!-- Logs injected here -->
+                            <tr class="text-slate-500 italic" id="emptyLogMsg"><td colspan="2" class="py-4 text-center">Click Calculate to begin</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="resultBox" class="bg-slate-900 p-6 rounded-xl border-2 border-slate-700 transition-all duration-500">
+                <p class="text-sm text-slate-400 font-semibold mb-1 uppercase tracking-wider" id="resultLabel">Final Result</p>
+                <h3 class="text-2xl font-bold text-white mb-3">TOY PUBLIC KEY (Q)</h3>
+                <div class="bg-slate-800 px-4 py-4 rounded-lg border border-slate-700 mono text-2xl text-slate-500 w-full text-center tracking-widest shadow-inner transition-colors duration-500" id="finalResultText">
+                    (?, ?)
+                </div>
+            </div>
+
+        </div>
+
+        <div class="lg:col-span-7 flex flex-col">
+            <div class="relative w-full h-full max-h-[80vh] flex items-center justify-center p-2 bg-slate-800 rounded-xl border border-slate-700 shadow-lg">
+                <canvas id="eccCanvas" width="800" height="800"></canvas>
+                
+                <div id="statusOverlay" class="absolute top-6 left-6 bg-slate-900/90 backdrop-blur border border-slate-600 text-slate-200 px-4 py-2 rounded-lg text-sm mono shadow-xl transition-all">
+                    Awaiting calculation...
+                </div>
+            </div>
+            <p class="text-center text-slate-500 text-sm mt-4 font-medium">
+                17x17 Grid • Modulo 17 • Gray dots represent valid points on the curve.
+            </p>
+        </div>
+    </main>
+
+    <section class="max-w-7xl mx-auto w-full mt-12 mb-12">
+        <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-white">Statistical Exploration & Cryptographic Properties</h2>
+            </div>
+            
+            <div class="p-8 text-slate-300 leading-relaxed space-y-8">
+                
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-cyan-400">Distribution & Apparent Uniformity</h3>
+                    <p>
+                        When plotting the valid points of <span class="mono">y² = x³ + 7 (mod 17)</span> on a real Cartesian plane, we would see a smooth, continuous curve. However, in the finite field <span class="mono">GF(17)</span>, the points appear pseudo-randomly scattered across the 17x17 grid. 
+                    </p>
+                    <p>
+                        Despite their geometric origin, the <span class="mono">x</span> and <span class="mono">y</span> coordinates are distributed uniformly across the valid domain without forming obvious visual clusters. This "apparent uniformity" is crucial for cryptography, as it prevents an attacker from deducing the private key <span class="mono">k</span> just by looking at the location of the public key <span class="mono">Q</span>. The discrete logarithm problem (ECDLP) relies on the fact that traversing from <span class="mono">G</span> to <span class="mono">kG</span> jumps erratically around the finite field.
+                    </p>
+                </div>
+
+                <div class="border-t border-slate-700 pt-8">
+                    <h3 class="text-xl font-semibold text-cyan-400 mb-6">ECC One-Way Function vs. Cryptographic Hash Functions</h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700 hover:border-cyan-500/30 transition-colors">
+                            <h4 class="font-bold text-lg text-white mb-3 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                                Elliptic Curve Cryptography (ECC)
+                            </h4>
+                            <ul class="space-y-3 text-sm text-slate-300">
+                                <li><strong>Algebraic Structure:</strong> ECC relies on homomorphic algebraic relationships. Calculating <span class="mono">(k+1)G</span> is directly related to <span class="mono">kG</span> via point addition. This underlying structure is what allows for public-key encryption and digital signatures.</li>
+                                <li><strong>No Avalanche Effect:</strong> Changing the input <span class="mono">k</span> by a small amount (e.g., <span class="mono">k</span> to <span class="mono">k+1</span>) simply shifts the output by adding <span class="mono">G</span>. It does <em>not</em> randomly scramble all the bits of the coordinate output.</li>
+                                <li><strong>Reversibility:</strong> It is computationally difficult to reverse (ECDLP), but it maps to a specific, structured cyclic group.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700 hover:border-blue-500/30 transition-colors">
+                            <h4 class="font-bold text-lg text-white mb-3 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Cryptographic Hash Functions
+                            </h4>
+                            <ul class="space-y-3 text-sm text-slate-300">
+                                <li><strong>No Algebraic Structure:</strong> True hash functions (like SHA-256) are designed to completely destroy any mathematical relationship between the input and output.</li>
+                                <li><strong>Strict Avalanche Effect:</strong> A fundamental requirement. Flipping just 1 bit in the input message must flip, on average, 50% of the output bits in an unpredictable, chaotic manner.</li>
+                                <li><strong>Pseudo-randomness:</strong> The output must be indistinguishable from true randomness, serving as a unique "fingerprint" rather than a mathematically workable value.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Constants and Math Logic
+        const p = 17; 
+        const a = 0;  
+        const b = 7;  
+        
+        // Provided valid points
+        const validPointsList = [
+            {x: 1, y: 5}, {x: 1, y: 12}, {x: 2, y: 7}, {x: 2, y: 10},
+            {x: 3, y: 0}, {x: 5, y: 8}, {x: 5, y: 9}, {x: 6, y: 6},
+            {x: 6, y: 11}, {x: 8, y: 3}, {x: 8, y: 14}, {x: 10, y: 2},
+            {x: 10, y: 15}, {x: 12, y: 1}, {x: 12, y: 16}, {x: 15, y: 4}, {x: 15, y: 13}
+        ];
+
+        let G = validPointsList[0]; // Default
+
+        function mod(n, m) {
+            return ((n % m) + m) % m;
+        }
+
+        function modInverse(val, m) {
+            let m0 = m, t, q;
+            let x0 = 0, x1 = 1;
+            if (m === 1) return 0;
+            val = mod(val, m);
+            while (val > 1) {
+                q = Math.floor(val / m);
+                t = m;
+                m = val % m;
+                val = t;
+                t = x0;
+                x0 = x1 - q * x0;
+                x1 = t;
+            }
+            if (x1 < 0) x1 += m0;
+            return x1;
+        }
+
+        function isInfinity(point) {
+            return point === null || (point.x === null && point.y === null);
+        }
+
+        function pointAdd(P, Q) {
+            if (isInfinity(P)) return Q;
+            if (isInfinity(Q)) return P;
+
+            if (P.x === Q.x) {
+                if (P.y === mod(-Q.y, p) || P.y === 0) {
+                    return null; // Point at Infinity
+                }
+                if (P.y === Q.y) {
+                    return pointDouble(P);
+                }
+            }
+
+            let dy = mod(Q.y - P.y, p);
+            let dx = mod(Q.x - P.x, p);
+            let invDx = modInverse(dx, p);
+            let lambda = mod(dy * invDx, p);
+
+            let x3 = mod(lambda * lambda - P.x - Q.x, p);
+            let y3 = mod(lambda * (P.x - x3) - P.y, p);
+
+            return { x: x3, y: y3 };
+        }
+
+        function pointDouble(P) {
+            if (isInfinity(P)) return null;
+            if (P.y === 0) return null; 
+
+            let num = mod(3 * P.x * P.x + a, p);
+            let den = mod(2 * P.y, p);
+            let invDen = modInverse(den, p);
+            let lambda = mod(num * invDen, p);
+
+            let x3 = mod(lambda * lambda - 2 * P.x, p);
+            let y3 = mod(lambda * (P.x - x3) - P.y, p);
+
+            return { x: x3, y: y3 };
+        }
+
+        const canvas = document.getElementById('eccCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusOverlay = document.getElementById('statusOverlay');
+        
+        const gridCells = p; 
+        const padding = 50; 
+        
+        function mapToCanvas(x, y) {
+            const usableWidth = canvas.width - (padding * 2);
+            const usableHeight = canvas.height - (padding * 2);
+            const cellW = usableWidth / (gridCells - 1);
+            const cellH = usableHeight / (gridCells - 1);
+            
+            const pixelX = padding + (x * cellW);
+            const pixelY = canvas.height - padding - (y * cellH);
+            
+            return { px: pixelX, py: pixelY };
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#334155'; // slate-700
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#94a3b8'; // slate-400
+            ctx.font = '14px "JetBrains Mono"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            for (let i = 0; i < gridCells; i++) {
+                // Vertical lines
+                let p1 = mapToCanvas(i, 0);
+                let p2 = mapToCanvas(i, gridCells - 1);
+                ctx.beginPath();
+                ctx.moveTo(p1.px, p1.py);
+                ctx.lineTo(p2.px, p2.py);
+                ctx.stroke();
+                ctx.fillText(i, p1.px, p1.py + 25); // X label
+
+                // Horizontal lines
+                let p3 = mapToCanvas(0, i);
+                let p4 = mapToCanvas(gridCells - 1, i);
+                ctx.beginPath();
+                ctx.moveTo(p3.px, p3.py);
+                ctx.lineTo(p4.px, p4.py);
+                ctx.stroke();
+                ctx.fillText(i, p3.px - 25, p3.py); // Y label
+            }
+        }
+
+        function drawBackgroundPoints() {
+            ctx.fillStyle = '#475569'; // slate-600
+            validPointsList.forEach(pt => {
+                const { px, py } = mapToCanvas(pt.x, pt.y);
+                ctx.beginPath();
+                ctx.arc(px, py, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawArrow(fromx, fromy, tox, toy, color) {
+            const headlen = 12; 
+            const dx = tox - fromx;
+            const dy = toy - fromy;
+            const angle = Math.atan2(dy, dx);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist < 20) return; 
+            
+            const adjustedTox = tox - Math.cos(angle) * 12;
+            const adjustedToy = toy - Math.sin(angle) * 12;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(fromx, fromy);
+            ctx.lineTo(adjustedTox, adjustedToy);
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(adjustedTox, adjustedToy);
+            ctx.lineTo(adjustedTox - headlen * Math.cos(angle - Math.PI / 6), adjustedToy - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(adjustedTox - headlen * Math.cos(angle + Math.PI / 6), adjustedToy - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+        }
+
+        let state = {
+            isPlaying: false,
+            targetK: 0,
+            currentK: 0,
+            currentPoint: null,
+            history: [],
+            timeoutId: null
+        };
+
+        const ANIM_DELAY = 500; 
+
+        // DOM Elements
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const kInput = document.getElementById('privateKey');
+        const basePointSelect = document.getElementById('basePoint');
+        const calcLog = document.getElementById('calcLog');
+        const emptyLogMsg = document.getElementById('emptyLogMsg');
+        const logContainer = document.getElementById('logContainer');
+        const resultBox = document.getElementById('resultBox');
+        const resultLabel = document.getElementById('resultLabel');
+        const finalResultText = document.getElementById('finalResultText');
+
+        // Initialize Dropdown
+        validPointsList.forEach((pt, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.text = `(${pt.x}, ${pt.y})`;
+            basePointSelect.appendChild(option);
+        });
+
+        basePointSelect.addEventListener('change', (e) => {
+            G = validPointsList[e.target.value];
+            resetApp();
+        });
+
+        function formatPoint(pt) {
+            return isInfinity(pt) ? 'Point at Infinity (∞)' : `(${pt.x}, ${pt.y})`;
+        }
+
+        function setUIComputing(isComputing) {
+            startBtn.disabled = isComputing;
+            kInput.disabled = isComputing;
+            basePointSelect.disabled = isComputing;
+            startBtn.innerHTML = isComputing ? 
+                `<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Computing...` 
+                : `Calculate Public Key`;
+        }
+
+        function logStep(step, pt, isFinal = false) {
+            if (emptyLogMsg) emptyLogMsg.style.display = 'none';
+            const tr = document.createElement('tr');
+            tr.className = `border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors fade-in ${isFinal ? 'text-emerald-400 font-bold bg-emerald-900/10' : ''}`;
+            tr.innerHTML = `<td class="py-2">${step}G</td><td class="py-2">${formatPoint(pt)}</td>`;
+            calcLog.appendChild(tr);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function renderScene() {
+            drawGrid();
+            drawBackgroundPoints();
+
+            // Draw connecting lines
+            if (state.history.length > 1) {
+                for (let i = 1; i < state.history.length; i++) {
+                    let p1 = state.history[i-1];
+                    let p2 = state.history[i];
+                    if (!isInfinity(p1) && !isInfinity(p2)) {
+                        let c1 = mapToCanvas(p1.x, p1.y);
+                        let c2 = mapToCanvas(p2.x, p2.y);
+                        // Progressively lighter opacities for older steps
+                        let opacity = Math.max(0.15, (i / state.history.length) * 0.7);
+                        drawArrow(c1.px, c1.py, c2.px, c2.py, `rgba(6, 182, 212, ${opacity})`); 
+                    }
+                }
+            }
+
+            // Draw current active point
+            if (state.currentPoint && !isInfinity(state.currentPoint)) {
+                const { px, py } = mapToCanvas(state.currentPoint.x, state.currentPoint.y);
+                
+                ctx.shadowColor = '#06b6d4'; 
+                ctx.shadowBlur = 20;
+                
+                ctx.fillStyle = '#22d3ee'; 
+                ctx.beginPath();
+                ctx.arc(px, py, 8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 15px "Inter"';
+                
+                // Position label so it doesn't clip
+                const labelX = px > canvas.width - 50 ? px - 40 : px + 15;
+                const labelY = py < 50 ? py + 25 : py - 15;
+                ctx.fillText(`${state.currentK}G`, labelX, labelY);
+            }
+        }
+
+        function calculateNextStep() {
+            if (!state.isPlaying) return;
+
+            state.currentK++;
+            if (state.currentK === 1) {
+                state.currentPoint = { x: G.x, y: G.y };
+            } else {
+                state.currentPoint = pointAdd(state.currentPoint, G);
+            }
+
+            state.history.push(state.currentPoint);
+            const isFinished = state.currentK === state.targetK;
+            
+            logStep(state.currentK, state.currentPoint, isFinished);
+            statusOverlay.textContent = `Computing: ${state.currentK}G = ${formatPoint(state.currentPoint)}`;
+            statusOverlay.className = "absolute top-6 left-6 bg-cyan-900/90 border border-cyan-500 text-cyan-100 px-4 py-2 rounded-lg text-sm mono shadow-lg";
+            
+            renderScene();
+
+            if (isFinished) {
+                finishComputation();
+            } else {
+                state.timeoutId = setTimeout(calculateNextStep, ANIM_DELAY);
+            }
+        }
+
+        function finishComputation() {
+            state.isPlaying = false;
+            setUIComputing(false);
+            statusOverlay.textContent = `Success! Public Key Q = ${formatPoint(state.currentPoint)}`;
+            statusOverlay.className = "absolute top-6 left-6 bg-emerald-900/90 border border-emerald-500 text-emerald-100 px-4 py-2 rounded-lg text-sm mono shadow-lg fade-in";
+
+            // Visual pop for the result box
+            finalResultText.textContent = formatPoint(state.currentPoint);
+            finalResultText.classList.remove('text-slate-500', 'bg-slate-800');
+            finalResultText.classList.add('text-emerald-400', 'bg-emerald-900/20', 'border-emerald-500/50', 'shadow-[0_0_15px_rgba(16,185,129,0.2)]');
+            resultBox.classList.add('border-emerald-500/50', 'bg-slate-800');
+            resultLabel.classList.replace('text-slate-400', 'text-emerald-400');
+        }
+
+        function resetApp() {
+            clearTimeout(state.timeoutId);
+            state = { isPlaying: false, targetK: 0, currentK: 0, currentPoint: null, history: [], timeoutId: null };
+            
+            calcLog.innerHTML = '<tr class="text-slate-500 italic" id="emptyLogMsg"><td colspan="2" class="py-4 text-center">Click Calculate to begin</td></tr>';
+            setUIComputing(false);
+            
+            finalResultText.textContent = '(?, ?)';
+            finalResultText.classList.add('text-slate-500', 'bg-slate-800');
+            finalResultText.classList.remove('text-emerald-400', 'bg-emerald-900/20', 'border-emerald-500/50', 'shadow-[0_0_15px_rgba(16,185,129,0.2)]');
+            resultBox.classList.remove('border-emerald-500/50', 'bg-slate-800');
+            resultLabel.classList.replace('text-emerald-400', 'text-slate-400');
+            
+            statusOverlay.textContent = 'Awaiting calculation...';
+            statusOverlay.className = "absolute top-6 left-6 bg-slate-900/90 backdrop-blur border border-slate-600 text-slate-200 px-4 py-2 rounded-lg text-sm mono shadow-xl transition-all";
+
+            drawGrid();
+            drawBackgroundPoints();
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', () => {
+            const kVal = parseInt(kInput.value, 10);
+            if (isNaN(kVal) || kVal < 1) {
+                alert("Private Key (k) must be a positive integer.");
+                return;
+            }
+            
+            resetApp();
+            calcLog.innerHTML = ''; 
+            
+            state.targetK = kVal;
+            state.isPlaying = true;
+            setUIComputing(true);
+            calculateNextStep();
+        });
+
+        resetBtn.addEventListener('click', resetApp);
+
+        // Initial setup
+        window.onload = resetApp;
+
+    </script>
+</body>
+</html>
