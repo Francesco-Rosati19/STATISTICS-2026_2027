@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="it" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptography Homework Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --text-main: #f8fafc;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center justify-center">
+
+    <div class="max-w-3xl w-full text-center mb-12 fade-in">
+        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 mb-4">
+            STATISTICS
+        </h1>
+        <p class="text-slate-400 text-lg">
+            Raccolta degli homeworks durante il corso. Seleziona un modulo per visualizzare l'app interattiva e le analisi crittografiche.
+        </p>
+    </div>
+
+    <div class="max-w-4xl w-full grid md:grid-cols-2 gap-6 fade-in" style="animation-delay: 0.1s;">
+        
+        <!-- Link a Homework 1 -->
+        <a href="homework1.html" class="group block bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-lg hover:border-cyan-500/50 hover:shadow-cyan-500/20 transition-all duration-300">
+            <div class="text-cyan-400 font-mono text-sm mb-2">HMWK 1</div>
+            <h2 class="text-2xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors">ECC Scalar Multiplication</h2>
+            <p class="text-slate-400 mb-6">
+                App interattiva che visualizza l'algoritmo <span class="mono text-cyan-200 text-sm">Q = k * G</span> su una curva ellittica giocattolo. Esplorazione del Problema del Logaritmo Discreto e differenze con le funzioni di Hash.
+            </p>
+            <div class="flex items-center text-cyan-500 font-semibold group-hover:translate-x-2 transition-transform">
+                Visualizza Progetto <span class="ml-2">→</span>
+            </div>
+        </a>
+
+        <!-- Link a Homework 2 -->
+        <a href="homework2.html" class="group block bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-lg hover:border-emerald-500/50 hover:shadow-emerald-500/20 transition-all duration-300">
+            <div class="text-emerald-400 font-mono text-sm mb-2">HMWK 2</div>
+            <h2 class="text-2xl font-bold text-white mb-3 group-hover:text-emerald-300 transition-colors">Ethereum Wallet Pipeline</h2>
+            <p class="text-slate-400 mb-6">
+                Analisi degli standard (BIP-39, BIP-32, EIP-55) e delle primitive (<span class="mono text-emerald-200 text-sm">secp256k1</span>, Keccak-256) per derivare un indirizzo da una frase mnemonica.
+            </p>
+            <div class="flex items-center text-emerald-500 font-semibold group-hover:translate-x-2 transition-transform">
+                Visualizza Progetto <span class="ml-2">→</span>
+            </div>
+        </a>
+
+    </div>
+
+    <footer class="mt-16 text-slate-500 text-sm mono fade-in" style="animation-delay: 0.2s;">
+        Studente: Francesco Pio Rosati • matricola:2069310
+    </footer>
+
+</body>
+</html>
