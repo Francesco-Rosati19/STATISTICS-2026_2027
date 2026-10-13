@@ -76,14 +76,17 @@
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8 flex flex-col">
+
+    <!-- Pulsante Torna all'Indice -->
     <div class="max-w-7xl mx-auto w-full mb-4 mt-2">
         <a href="index.html" class="group inline-flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 rounded-xl text-sm text-slate-400 hover:text-cyan-300 transition-all shadow-sm backdrop-blur-sm mono">
             <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
-            Torna all'Indice
+            Back to Index
         </a>
     </div>
+
     <header class="max-w-7xl mx-auto w-full mb-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
             <div>
@@ -103,6 +106,34 @@
 
     <main class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-8">
         
+        <!-- CONCEPT BRIEFING -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-white">Before We Start: Core Concepts</h2>
+            </div>
+            <div class="p-8 text-slate-300 leading-relaxed grid md:grid-cols-2 gap-8">
+                <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700">
+                    <h3 class="font-bold text-lg text-cyan-400 mb-3 flex items-center gap-2">
+                        <span class="text-xl">📝</span> What is a Mnemonic Phrase?
+                    </h3>
+                    <p class="text-sm">
+                        A <strong>Mnemonic Phrase (BIP-39)</strong> is a human-readable representation of a randomly generated number (entropy). It is usually a sequence of 12 to 24 words chosen from a standardized 2048-word dictionary. 
+                        Its primary purpose is to allow users to easily write down and backup their wallet seed, which can then dynamically generate a nearly infinite number of secure private keys via hierarchical deterministic (HD) paths.
+                    </p>
+                </div>
+                
+                <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700">
+                    <h3 class="font-bold text-lg text-cyan-400 mb-3 flex items-center gap-2">
+                        <span class="text-xl">🔑</span> What is a Raw Private Key?
+                    </h3>
+                    <p class="text-sm">
+                        A <strong>Raw Private Key</strong> is the fundamental mathematical core of cryptography. In Ethereum (secp256k1), it is a randomly generated 256-bit scalar integer (usually represented as a 64-character hexadecimal string). 
+                        Whoever possesses this key has complete computational authority to sign transactions and move funds. Deriving an address starting from a raw key bypasses the hierarchical seed structure entirely.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- INTERACTIVE PLAYGROUND -->
         <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
@@ -111,29 +142,31 @@
             </div>
             
             <div class="p-6">
-                <p class="text-sm text-slate-400 mb-4">
-                    The default input is the public development phrase "test ... junk", whose first address is <span class="mono text-cyan-300">0xf39F...2266</span>.
-                </p>
-
                 <!-- Tabs -->
                 <div class="flex gap-2 mb-4">
-                    <button id="tab-mnemonic" class="tab-btn active px-4 py-2 rounded-lg font-medium text-sm">Start with Mnemonic</button>
-                    <button id="tab-private" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm">Start with Raw Private Key</button>
+                    <button id="tab-mnemonic" class="tab-btn active px-4 py-2 rounded-lg font-medium text-sm transition-all">Start with Mnemonic</button>
+                    <button id="tab-private" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition-all">Start with Raw Private Key</button>
                 </div>
 
                 <!-- Input Area -->
                 <div class="space-y-4">
                     
                     <!-- Mnemonic Input Block -->
-                    <div id="mnemonic-block" class="space-y-4">
+                    <div id="mnemonic-block" class="space-y-4 fade-in">
                         <div>
-                            <label class="block text-sm text-slate-400 mb-1">Mnemonic</label>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-sm text-slate-400">Mnemonic Phrase (12, 15, 18, 21, or 24 words)</label>
+                                <div class="flex gap-2">
+                                    <button id="btn-gen-12" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-300 py-1 px-2 rounded transition-colors">Random 12-Word</button>
+                                    <button id="btn-gen-24" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-300 py-1 px-2 rounded transition-colors">Random 24-Word</button>
+                                </div>
+                            </div>
                             <textarea id="input-mnemonic" rows="2" class="input-custom w-full rounded-lg p-3 mono text-sm" spellcheck="false">test test test test test test test test test test test junk</textarea>
                         </div>
                         
                         <div class="flex flex-wrap gap-4 items-end">
                             <div class="flex-grow">
-                                <label class="block text-sm text-slate-400 mb-1">Passphrase (optional)</label>
+                                <label class="block text-sm text-slate-400 mb-1">Passphrase (optional extension)</label>
                                 <input type="password" id="input-passphrase" class="input-custom w-full rounded-lg p-2.5 mono text-sm" placeholder="Leave empty if none">
                             </div>
                             
@@ -157,30 +190,30 @@
                         </div>
                     </div>
 
-                    <!-- Private Key Input Block -->
-                    <div id="private-block" class="hidden space-y-4">
+                    <!-- Private Key Input Block (Hidden by default) -->
+                    <div id="private-block" class="hidden space-y-4 fade-in">
                         <div>
-                            <label class="block text-sm text-slate-400 mb-1">Raw Private Key (Hex)</label>
+                            <label class="block text-sm text-slate-400 mb-1">Raw Private Key (Hexadecimal)</label>
                             <input type="text" id="input-private-key" class="input-custom w-full rounded-lg p-3 mono text-sm" placeholder="0x..." spellcheck="false">
                         </div>
-                        <p class="text-xs text-yellow-500/80 italic">Note: Starting from a private key bypasses the BIP-39 and BIP-32 derivation steps.</p>
+                        <p class="text-xs text-yellow-500/80 italic">Note: Initiating the pipeline from a raw private key inherently bypasses the BIP-39 and BIP-32 deterministic derivation stages.</p>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-wrap items-center gap-4 pt-2">
-                        <button id="btn-derive" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 px-6 rounded-lg shadow-md transition-all active:scale-95">
-                            Derive
+                    <div class="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-700/50 mt-4 pt-4">
+                        <button id="btn-derive" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold py-2.5 px-8 rounded-lg shadow-md transition-all active:scale-95">
+                            Derive Address
                         </button>
                         
                         <!-- Random Generators (Hidden by default, shown in Private Key tab) -->
                         <button id="btn-gen-valid" class="hidden text-xs bg-emerald-900/30 hover:bg-emerald-800/50 text-emerald-400 border border-emerald-700/50 py-2.5 px-4 rounded-lg transition-colors font-medium">
-                            Random Valid Key
+                            Generate Random Valid Key
                         </button>
                         <button id="btn-gen-invalid" class="hidden text-xs bg-red-900/30 hover:bg-red-800/50 text-red-400 border border-red-700/50 py-2.5 px-4 rounded-lg transition-colors font-medium">
-                            Random Invalid Key
+                            Simulate Invalid Key (Error)
                         </button>
 
-                        <span id="validation-msg" class="text-sm text-slate-400 hidden ml-auto"></span>
+                        <span id="validation-msg" class="text-sm text-slate-400 hidden ml-auto font-medium bg-slate-900 px-4 py-2 rounded-lg border border-slate-700"></span>
                     </div>
 
                 </div>
@@ -188,13 +221,13 @@
 
             <!-- RESULTS VISUALIZATION PIPELINE -->
             <div id="results-container" class="bg-slate-900 border-t border-slate-700 p-6 hidden">
-                <h3 class="text-lg font-semibold text-white mb-6 text-center">Cryptographic Pipeline Results</h3>
+                <h3 class="text-lg font-semibold text-white mb-6 text-center">Cryptographic Execution Results</h3>
                 
                 <div class="flex flex-col items-center gap-3 font-mono max-w-2xl mx-auto w-full">
                     
                     <div id="res-seed-box" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-md transition-all">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-cyan-400 font-bold text-sm">BIP-39 Binary Seed</span>
+                            <span class="text-cyan-400 font-bold text-sm">BIP-39 Binary Seed (512-bit)</span>
                             <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">PBKDF2-HMAC-SHA512</span>
                         </div>
                         <div id="res-seed" class="text-slate-400 text-xs break-all leading-relaxed">...</div>
@@ -204,7 +237,7 @@
 
                     <div class="w-full bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-md transition-all">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-cyan-400 font-bold text-sm">Private Key</span>
+                            <span class="text-cyan-400 font-bold text-sm">Private Key (256-bit)</span>
                             <span id="res-path-badge" class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">BIP-32 Derivation</span>
                         </div>
                         <div id="res-priv" class="text-slate-400 text-xs break-all">...</div>
@@ -214,7 +247,7 @@
 
                     <div class="w-full bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-md transition-all">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-cyan-400 font-bold text-sm">Uncompressed Public Key</span>
+                            <span class="text-cyan-400 font-bold text-sm">Uncompressed Public Key (512-bit)</span>
                             <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">secp256k1</span>
                         </div>
                         <div id="res-pub" class="text-slate-400 text-xs break-all">...</div>
@@ -224,7 +257,7 @@
 
                     <div class="w-full bg-slate-800 border border-slate-600 rounded-lg p-4 shadow-md transition-all">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-cyan-400 font-bold text-sm">Raw Address (Lowercase)</span>
+                            <span class="text-cyan-400 font-bold text-sm">Raw Address (Last 20 Bytes)</span>
                             <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">Keccak-256</span>
                         </div>
                         <div id="res-raw-addr" class="text-slate-400 text-sm break-all">...</div>
@@ -234,9 +267,9 @@
 
                     <div class="w-full bg-emerald-900/20 border-2 border-emerald-500/50 rounded-lg p-5 shadow-[0_0_15px_rgba(16,185,129,0.15)] text-center relative group">
                         <div class="absolute top-2 right-2">
-                            <span class="text-[10px] bg-emerald-800 text-emerald-200 px-2 py-1 rounded">EIP-55 Checksum</span>
+                            <span class="text-[10px] bg-emerald-800 text-emerald-200 px-2 py-1 rounded">EIP-55 Hash-based Checksum</span>
                         </div>
-                        <div class="text-slate-400 text-xs mb-1 uppercase tracking-wider font-sans mt-2">Final Ethereum Address</div>
+                        <div class="text-slate-400 text-xs mb-1 uppercase tracking-wider font-sans mt-2">Final Transactionable Ethereum Address</div>
                         <div id="res-eip55-addr" class="text-emerald-400 font-bold text-lg lg:text-xl tracking-wider">...</div>
                     </div>
 
@@ -247,41 +280,70 @@
         <!-- THEORY SECTION -->
         <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden mt-4">
             <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
-                <h2 class="text-2xl font-bold text-white">Cryptographic Primitives Analysis</h2>
+                <h2 class="text-2xl font-bold text-white">In-Depth Cryptographic Analysis</h2>
             </div>
             
             <div class="p-8 text-slate-300 leading-relaxed space-y-10">
                 
                 <div class="space-y-4">
-                    <h3 class="text-xl font-semibold text-cyan-400">1. Operational Distinctions</h3>
+                    <h3 class="text-xl font-semibold text-cyan-400">1. Understanding the BIP-44 Derivation Path</h3>
+                    <p class="text-sm text-slate-400">
+                        The hierarchical structure allows multiple accounts to exist under a single seed. The standard path format is <span class="mono text-cyan-300">m / purpose' / coin_type' / account' / change / address_index</span>.
+                    </p>
+                    <div class="grid md:grid-cols-3 gap-4 mt-4 text-sm font-mono">
+                        <div class="bg-slate-900 p-4 border border-slate-700 rounded-lg">
+                            <div class="text-cyan-400 mb-1">m/44'</div>
+                            <div class="text-slate-400 font-sans text-xs">Defines the purpose (BIP-44 standard).</div>
+                        </div>
+                        <div class="bg-slate-900 p-4 border border-slate-700 rounded-lg">
+                            <div class="text-cyan-400 mb-1">/60'</div>
+                            <div class="text-slate-400 font-sans text-xs">Coin Type. 60 specifically represents the Ethereum network.</div>
+                        </div>
+                        <div class="bg-slate-900 p-4 border border-slate-700 rounded-lg">
+                            <div class="text-cyan-400 mb-1">/0'</div>
+                            <div class="text-slate-400 font-sans text-xs">Account level. Allows users to segregate funds logically (e.g., Savings vs Trading).</div>
+                        </div>
+                        <div class="bg-slate-900 p-4 border border-slate-700 rounded-lg">
+                            <div class="text-cyan-400 mb-1">/0</div>
+                            <div class="text-slate-400 font-sans text-xs">Change layer (0 for external public addresses, 1 for internal change).</div>
+                        </div>
+                        <div class="bg-slate-900 p-4 border border-slate-700 rounded-lg">
+                            <div class="text-cyan-400 mb-1">/0</div>
+                            <div class="text-slate-400 font-sans text-xs">Address Index. Incremented to generate sequentially new addresses (0, 1, 2...).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-700 pt-8">
+                    <h3 class="text-xl font-semibold text-cyan-400 mb-6">2. Operational Cryptographic Distinctions</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
                             <thead>
                                 <tr class="text-slate-400 border-b border-slate-700">
                                     <th class="pb-3 font-medium w-1/4">Concept</th>
-                                    <th class="pb-3 font-medium w-3/4">Definition & Role in the Wallet</th>
+                                    <th class="pb-3 font-medium w-3/4">Definition & Architectural Role</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-700/50">
                                 <tr class="hover:bg-slate-700/30 transition-colors">
                                     <td class="py-4 font-bold text-slate-200">Generation vs. Derivation</td>
-                                    <td class="py-4 text-slate-400"><span class="text-cyan-300">Generation</span> creates pure randomness (entropy) for the root seed. <span class="text-cyan-300">Derivation</span> uses deterministic algorithms (BIP-32) to calculate infinite secure child keys starting from the seed without requiring new entropy.</td>
+                                    <td class="py-4 text-slate-400"><span class="text-cyan-300">Generation</span> involves gathering true stochastic randomness (entropy) for the root seed. <span class="text-cyan-300">Derivation</span> leverages deterministic mathematical algorithms (BIP-32) to compute infinite, cryptographically secure child keys originating from the seed without necessitating new entropy.</td>
                                 </tr>
                                 <tr class="hover:bg-slate-700/30 transition-colors">
                                     <td class="py-4 font-bold text-slate-200">Public-Key Cryptography</td>
-                                    <td class="py-4 text-slate-400">Asymmetric math (e.g., <span class="mono">secp256k1</span>). Allows deriving a public key from a private one (easy calculation), making the reverse calculation computationally impossible. Fundamental for signing transactions.</td>
+                                    <td class="py-4 text-slate-400">Employs asymmetric mathematics (e.g., <span class="mono text-cyan-300">secp256k1</span>). Facilitates the derivation of a public key from a private key via scalar multiplication, while strictly ensuring the reverse calculation is mathematically intractable (Elliptic Curve Discrete Logarithm Problem).</td>
                                 </tr>
                                 <tr class="hover:bg-slate-700/30 transition-colors">
-                                    <td class="py-4 font-bold text-slate-200">Hashing</td>
-                                    <td class="py-4 text-slate-400">Deterministic one-way function (<span class="mono">Keccak-256</span>) that compresses variable-size data into a fixed output (256 bits). Hides the public key until funds are sent, reducing its size.</td>
+                                    <td class="py-4 font-bold text-slate-200">Cryptographic Hashing</td>
+                                    <td class="py-4 text-slate-400">A deterministic, collision-resistant one-way function (<span class="mono text-cyan-300">Keccak-256</span>) that compresses arbitrary-sized data into a fixed-length output. Its primary roles include obfuscating the public key geometry until the first outbound transaction and conserving blockchain storage space.</td>
                                 </tr>
                                 <tr class="hover:bg-slate-700/30 transition-colors">
-                                    <td class="py-4 font-bold text-slate-200">Checksum</td>
-                                    <td class="py-4 text-slate-400">Error detection algorithm. In <span class="mono">EIP-55</span>, it uses the hash of the address itself to decide which hexadecimal letters to capitalize, blocking 99.98% of manual typing errors.</td>
+                                    <td class="py-4 font-bold text-slate-200">Checksum Validation</td>
+                                    <td class="py-4 text-slate-400">An error-detection paradigm designed for UI/UX safety. The <span class="mono text-cyan-300">EIP-55</span> standard hashes the raw address and exploits the resulting bits to determine the capitalization of alphabetical hexadecimal characters, mitigating the risk of user typographical errors.</td>
                                 </tr>
                                 <tr class="hover:bg-slate-700/30 transition-colors">
-                                    <td class="py-4 font-bold text-slate-200">Encoding</td>
-                                    <td class="py-4 text-slate-400">Changing data format purely for human or system readability (e.g., the <span class="mono">BIP-39</span> word list, or Base16 string), without altering the underlying cryptographic data.</td>
+                                    <td class="py-4 font-bold text-slate-200">Data Encoding</td>
+                                    <td class="py-4 text-slate-400">The process of transforming data formats strictly to enhance human readability or systemic compatibility (e.g., mapping binary entropy to the <span class="mono text-cyan-300">BIP-39</span> dictionary or formatting to Base16 Hex), without mutating the underlying cryptographic payload.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -289,41 +351,39 @@
                 </div>
 
                 <div class="border-t border-slate-700 pt-8">
-                    <h3 class="text-xl font-semibold text-cyan-400 mb-6">2. Historical and Temporal Context</h3>
-                    <ul class="space-y-3 text-slate-400 list-disc list-inside marker:text-cyan-500">
-                        <li><strong class="text-slate-200">1977 - RSA:</strong> Birth of public-key cryptography, proving the feasibility of asymmetric math.</li>
-                        <li><strong class="text-slate-200">2001 - SHA-2 / SHA-512:</strong> Standardized by NIST. Used for key "stretching" (<span class="mono text-cyan-300">PBKDF2</span>) in BIP-39.</li>
-                        <li><strong class="text-slate-200">2012 - BIP-32:</strong> Hierarchical Deterministic (HD) Wallets. A single backup file generates infinite addresses.</li>
-                        <li><strong class="text-slate-200">2013 - BIP-39:</strong> UX Revolution: binary entropy is encoded into vocabulary words (mnemonics).</li>
-                        <li><strong class="text-slate-200">2014 - BIP-44:</strong> Standardizes derivation paths (e.g., <span class="mono text-cyan-300">m/44'/60'/0'/0/0</span>).</li>
-                        <li><strong class="text-slate-200">2015 - SHA-3:</strong> Standard based on Keccak's <em>Sponge Construction</em> (N.B. Ethereum uses the original <span class="mono text-cyan-300">Keccak-256</span> with different padding than SHA3-256).</li>
-                        <li><strong class="text-slate-200">2016 - EIP-55:</strong> Implementation of the mixed-case checksum in Ethereum.</li>
+                    <h3 class="text-xl font-semibold text-cyan-400 mb-6">3. Temporal and Historical Context</h3>
+                    <ul class="space-y-3 text-slate-400 list-disc list-inside marker:text-cyan-500 text-sm">
+                        <li><strong class="text-slate-200">1977 - RSA Algorithm:</strong> The seminal introduction of practical public-key cryptography, validating the mathematical feasibility of asymmetric key pairs.</li>
+                        <li><strong class="text-slate-200">2001 - SHA-2 Family:</strong> Standardized by NIST. SHA-512 is fundamentally utilized for cryptographic key stretching (<span class="mono text-cyan-300">PBKDF2</span>) within the BIP-39 protocol.</li>
+                        <li><strong class="text-slate-200">2012 - BIP-32 Standard:</strong> The genesis of Hierarchical Deterministic (HD) Wallets, enabling a singular backup vector to generate an infinite cryptographic tree of addresses.</li>
+                        <li><strong class="text-slate-200">2013 - BIP-39 Protocol:</strong> A monumental UX evolution mapping raw binary entropy into sequential dictionary words (Mnemonics).</li>
+                        <li><strong class="text-slate-200">2014 - BIP-44 Framework:</strong> Established standardized architectural paths for HD Wallets, ensuring cross-compatibility and multi-coin segregation.</li>
+                        <li><strong class="text-slate-200">2015 - SHA-3 (Keccak):</strong> Standardized by NIST relying on the <em>Sponge Construction</em> architecture. <em class="text-slate-500">Note: Ethereum natively utilizes the pre-standardized <span class="mono text-cyan-300">Keccak-256</span>, which implements distinct padding constants compared to final NIST SHA3-256.</em></li>
+                        <li><strong class="text-slate-200">2016 - EIP-55 standard:</strong> Engineered by Vitalik Buterin, introducing the mixed-case checksum mechanism natively into the Ethereum ecosystem.</li>
                     </ul>
                 </div>
 
                 <div class="border-t border-slate-700 pt-8">
-                    <h3 class="text-xl font-semibold text-cyan-400 mb-6">3. Why does the pipeline require multiple algorithms?</h3>
-                    
+                    <h3 class="text-xl font-semibold text-cyan-400 mb-6">4. Architecture: Why Multiple Algorithms?</h3>
                     <div class="grid md:grid-cols-2 gap-8">
                         <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700 hover:border-cyan-500/30 transition-colors">
                             <h4 class="font-bold text-lg text-white mb-3 flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                                Management & Authentication
+                                Human UX & Authentication
                             </h4>
                             <ul class="space-y-3 text-sm text-slate-400">
-                                <li><strong>BIP-39 / BIP-32:</strong> Solve the <em>Human</em> and <em>Management</em> problem. The user must be able to make a secure paper backup (uniform distribution effect and avalanche effect for uncorrelated but deterministic keys).</li>
-                                <li><strong>secp256k1:</strong> Solves <em>Authentication</em>. Normal hash functions do not allow message signing; an algebraic structure showing statistical apparent uniformity is needed to hide the private key.</li>
+                                <li><strong>BIP-39 & BIP-32:</strong> Engineered to solve the <em>Human Interface</em> vector. Cryptographic security is irrelevant if humans cannot reliably backup the seed. PBKDF2 ensures uniform entropy distribution and brute-force resistance.</li>
+                                <li><strong>secp256k1 (Elliptic Curve):</strong> Solves the <em>Authentication Problem</em>. Standard hash functions cannot digitally sign transactions; an asymmetric algebraic structure is required to mathematically prove ownership without compromising the private scalar.</li>
                             </ul>
                         </div>
-                        
                         <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700 hover:border-blue-500/30 transition-colors">
                             <h4 class="font-bold text-lg text-white mb-3 flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                                Spatial Security & UX
+                                Spatial Efficiency & Error Detection
                             </h4>
                             <ul class="space-y-3 text-sm text-slate-400">
-                                <li><strong>Keccak-256:</strong> Solves the <em>Space</em> problem. Compresses heavy public keys (64 bytes) adding a strict "avalanche effect" and collision resistance to obfuscate the key until use.</li>
-                                <li><strong>EIP-55:</strong> Solves the <em>UX</em> problem. Applies checksum logic at the application level (wallet software) to discard incorrect strings, guaranteeing ~15 extra bits of entropy against accidental typos.</li>
+                                <li><strong>Keccak-256:</strong> Solves the <em>Storage Efficiency Vectors</em>. It compresses the heavy 64-byte public key into 20 bytes while enforcing a strict "avalanche effect". It simultaneously provides a layer of post-quantum obfuscation prior to the first transaction.</li>
+                                <li><strong>EIP-55:</strong> Solves the <em>Fatal Typo Problem</em>. Because mathematical hashing algorithms are indifferent to human intent, EIP-55 injects checksum constraints at the software layer, yielding approximately 15 extra bits of structural entropy to reject corrupted strings.</li>
                             </ul>
                         </div>
                     </div>
@@ -335,6 +395,8 @@
     </main>
 
     <script>
+        // Interactive Logic using ethers.js
+        
         let mode = 'mnemonic'; 
         
         const tabMnemonic = document.getElementById('tab-mnemonic');
@@ -344,9 +406,12 @@
         const btnDerive = document.getElementById('btn-derive');
         const btnGenValid = document.getElementById('btn-gen-valid');
         const btnGenInvalid = document.getElementById('btn-gen-invalid');
+        const btnGen12 = document.getElementById('btn-gen-12');
+        const btnGen24 = document.getElementById('btn-gen-24');
+        const inputMnemonic = document.getElementById('input-mnemonic');
+        const privateInput = document.getElementById('input-private-key');
         const resultsContainer = document.getElementById('results-container');
         const valMsg = document.getElementById('validation-msg');
-        const privateInput = document.getElementById('input-private-key');
 
         // Toggle Tabs
         tabMnemonic.addEventListener('click', () => {
@@ -377,31 +442,45 @@
             valMsg.classList.add('hidden');
         });
 
-        // Random Generators
+        // Mnemonic Generators
+        btnGen12.addEventListener('click', () => {
+            // 16 bytes (128 bits) of entropy = 12 words
+            const entropy = ethers.utils.randomBytes(16);
+            inputMnemonic.value = ethers.utils.entropyToMnemonic(entropy);
+            btnDerive.click();
+        });
+
+        btnGen24.addEventListener('click', () => {
+            // 32 bytes (256 bits) of entropy = 24 words
+            const entropy = ethers.utils.randomBytes(32);
+            inputMnemonic.value = ethers.utils.entropyToMnemonic(entropy);
+            btnDerive.click();
+        });
+
+        // Private Key Generators
         btnGenValid.addEventListener('click', () => {
-            // Generate exactly 32 random bytes (Valid secp256k1 key length)
             const randomWallet = ethers.Wallet.createRandom();
             privateInput.value = randomWallet.privateKey;
-            btnDerive.click(); // Auto-derive to show success
+            btnDerive.click();
         });
 
         btnGenInvalid.addEventListener('click', () => {
-            // Generate exactly 31 random bytes (Invalid length, triggers error)
+            // Force an invalid length key (31 bytes instead of 32)
             const invalidBytes = ethers.utils.randomBytes(31);
             privateInput.value = ethers.utils.hexlify(invalidBytes);
-            btnDerive.click(); // Auto-derive to show the library error
+            btnDerive.click();
         });
 
         // Derivation Logic
         btnDerive.addEventListener('click', () => {
             valMsg.classList.add('hidden');
-            valMsg.classList.remove('text-red-400', 'text-slate-400');
+            valMsg.classList.remove('text-red-400', 'text-emerald-400', 'border-red-700/50', 'border-emerald-700/50');
             
             try {
                 let wallet;
                 
                 if (mode === 'mnemonic') {
-                    const mnemonicPhrase = document.getElementById('input-mnemonic').value.trim();
+                    const mnemonicPhrase = inputMnemonic.value.trim().toLowerCase().replace(/\s+/g, ' ');
                     const passphrase = document.getElementById('input-passphrase').value;
                     const pathAccount = document.getElementById('path-account').value || 0;
                     const pathChange = document.getElementById('path-change').value || 0;
@@ -410,7 +489,7 @@
                     const derivationPath = `m/44'/60'/${pathAccount}'/${pathChange}/${pathIndex}`;
                     
                     if (!ethers.utils.isValidMnemonic(mnemonicPhrase)) {
-                        throw new Error("Invalid mnemonic phrase. Wordlist or checksum mismatch.");
+                        throw new Error("Invalid mnemonic phrase. Wordlist or checksum verification failed.");
                     }
                     
                     const hdNode = ethers.utils.HDNode.fromMnemonic(mnemonicPhrase, passphrase);
@@ -424,7 +503,8 @@
                     document.getElementById('res-seed').textContent = mnemonicObj;
                     document.getElementById('res-path-badge').textContent = `Path: ${derivationPath}`;
                     
-                    valMsg.textContent = `${mnemonicPhrase.split(' ').length} words processed.`;
+                    valMsg.innerHTML = `<span class="text-emerald-400">✓ Valid ${mnemonicPhrase.split(' ').length}-word mnemonic verified.</span>`;
+                    valMsg.classList.add('border-emerald-700/50');
                     
                 } else {
                     let privKey = privateInput.value.trim();
@@ -436,7 +516,8 @@
                     document.getElementById('arrow-seed').style.display = 'none';
                     document.getElementById('res-path-badge').textContent = `Raw Input`;
                     
-                    valMsg.textContent = "Private key processed.";
+                    valMsg.innerHTML = `<span class="text-emerald-400">✓ Cryptographically valid 256-bit scalar mapped to curve.</span>`;
+                    valMsg.classList.add('border-emerald-700/50');
                 }
                 
                 document.getElementById('res-priv').textContent = wallet.privateKey;
@@ -453,7 +534,7 @@
                 for(let i=0; i<checksumAddress.length; i++) {
                     let char = checksumAddress[i];
                     if (char >= 'A' && char <= 'F') {
-                        highlightedEIP55 += `<span class="text-white">${char}</span>`;
+                        highlightedEIP55 += `<span class="text-white drop-shadow-[0_0_2px_rgba(255,255,255,0.8)]">${char}</span>`;
                     } else {
                         highlightedEIP55 += char;
                     }
@@ -468,13 +549,14 @@
                 valMsg.classList.remove('hidden');
 
             } catch (error) {
-                valMsg.textContent = "Error: " + error.message;
-                valMsg.classList.remove('hidden', 'text-slate-400');
-                valMsg.classList.add('text-red-400', 'block');
+                valMsg.innerHTML = `<span class="text-red-400">❌ Crypto Error: ${error.message}</span>`;
+                valMsg.classList.add('border-red-700/50', 'block');
+                valMsg.classList.remove('hidden');
                 resultsContainer.classList.add('hidden');
             }
         });
         
+        // Auto-run derivation on load for demonstration
         window.addEventListener('DOMContentLoaded', () => {
             btnDerive.click();
         });
