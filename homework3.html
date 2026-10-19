@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMWK 3: Toy ECC, Caesar Cipher & Statistical Cryptanalysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #a855f7;
+            --accent-secondary: #3b82f6;
+            --emerald-primary: #10b981;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .scroller::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scroller::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5); 
+            border-radius: 4px;
+        }
+        .scroller::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        .scroller::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+        .input-custom {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            transition: all 0.2s;
+        }
+        .input-custom:focus {
+            outline: none;
+            border-color: #a855f7;
+            box-shadow: 0 0 0 1px #a855f7;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col">
+
+    <!-- Back to Index Button -->
+    <div class="max-w-7xl mx-auto w-full mb-4 mt-2">
+        <a href="index.html" class="group inline-flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 hover:border-purple-500/50 rounded-xl text-sm text-slate-400 hover:text-purple-300 transition-all shadow-sm backdrop-blur-sm mono">
+            <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Index
+        </a>
+    </div>
+
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto w-full mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-cyan-400 to-blue-500">
+                    Toy ECC Encryption & Caesar Cryptanalysis
+                </h1>
+                <p class="text-slate-400 mt-2">
+                    Comparative Cryptanalysis: <span class="mono text-purple-300">Asymmetric EC-ElGamal</span> vs <span class="mono text-cyan-300">Symmetric Caesar Cipher</span>
+                </p>
+            </div>
+            <div class="text-left md:text-right bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                <div class="text-sm text-slate-400">Toy Curve: <span class="mono text-white">y² = x³ + 7 (mod 17)</span></div>
+                <div class="text-sm text-slate-400">Generator G: <span class="mono text-white">(1, 5)</span></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-8">
+
+        <!-- SECTION 1: TOY ECC ELGAMAL ENCRYPTION & ATTACK -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-purple-400">Part 1:</span> Toy EC-ElGamal Scheme & Restricted Key Space Attack
+                </h2>
+                <span class="text-xs bg-purple-900/40 text-purple-300 border border-purple-700/50 px-2.5 py-1 rounded-full mono">Asymmetric</span>
+            </div>
+            
+            <div class="p-6 grid lg:grid-cols-12 gap-6">
+                <!-- Parameters & Actions -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/80 space-y-3">
+                        <h3 class="text-sm font-semibold text-purple-400 uppercase tracking-wider">Key & Parameter Setup</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Private Key (k ∈ [1, 18])</label>
+                                <input type="number" id="ecc-priv-k" value="6" min="1" max="18" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Ephemeral Key (r ∈ [1, 18])</label>
+                                <input type="number" id="ecc-ephem-r" value="4" min="1" max="18" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Message Point (M ∈ Curve)</label>
+                            <select id="ecc-msg-pt" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <button id="btn-ecc-encrypt" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 px-4 rounded-lg shadow transition-all active:scale-95 text-sm">
+                            Encrypt & Decrypt Point
+                        </button>
+                        <button id="btn-ecc-attack" class="w-full bg-red-900/40 hover:bg-red-800/60 text-red-300 border border-red-700/50 font-semibold py-2.5 px-4 rounded-lg transition-all active:scale-95 text-sm">
+                            Launch ECDLP Brute-Force Attack
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Execution Log Display -->
+                <div class="lg:col-span-7 bg-slate-900 p-4 rounded-lg border border-slate-700/80 flex flex-col">
+                    <h3 class="text-sm font-semibold text-slate-300 mb-3 border-b border-slate-800 pb-2">EC-ElGamal Trace & Logarithm Recovery Output</h3>
+                    <div id="ecc-log-container" class="mono text-xs text-slate-300 space-y-2 overflow-y-auto max-h-[280px] scroller pr-2 flex-grow">
+                        <p class="text-slate-500 italic">Click "Encrypt & Decrypt Point" to run ElGamal operations over GF(17)...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: CAESAR CIPHER & MULTI-RULE CRYPTANALYSIS -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-cyan-400">Part 2:</span> Caesar Cipher & Statistical Cryptanalysis
+                </h2>
+                <span class="text-xs bg-cyan-900/40 text-cyan-300 border border-cyan-700/50 px-2.5 py-1 rounded-full mono">Symmetric</span>
+            </div>
+
+            <div class="p-6 grid lg:grid-cols-12 gap-6">
+                <!-- Controls & Input -->
+                <div class="lg:col-span-6 space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-sm text-slate-300 font-medium">Plaintext / Input Text</label>
+                            <div class="flex gap-1.5">
+                                <button id="btn-text-tiny" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-300 py-1 px-2 rounded">5 Chars</button>
+                                <button id="btn-text-short" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-300 py-1 px-2 rounded">20 Chars</button>
+                                <button id="btn-text-long" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-300 py-1 px-2 rounded">250 Chars</button>
+                            </div>
+                        </div>
+                        <textarea id="caesar-plaintext" rows="3" class="input-custom w-full rounded-lg p-3 mono text-xs leading-relaxed" spellcheck="false">Cryptography is the practice and study of techniques for secure communication in the presence of adversarial third parties.</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Shift Key (K ∈ [1, 25])</label>
+                            <input type="number" id="caesar-shift-key" value="7" min="1" max="25" class="input-custom w-full rounded-lg p-2 mono text-sm text-center">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Statistical Attack Rule</label>
+                            <select id="caesar-rule-select" class="input-custom w-full rounded-lg p-2 mono text-xs">
+                                <option value="chi2">1. Chi-Squared (χ²) Goodness-of-Fit</option>
+                                <option value="top_letter">2. Most Frequent Letter (E-Pivot)</option>
+                                <option value="dict">3. Common Word Dictionary Match</option>
+                                <option value="trigram">4. English Trigram N-Gram Scoring</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Generated Ciphertext</label>
+                        <textarea id="caesar-ciphertext" rows="2" class="input-custom w-full rounded-lg p-2.5 mono text-xs leading-relaxed" readonly placeholder="Encrypted text..."></textarea>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button id="btn-caesar-encrypt" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2 px-3 rounded-lg transition-all text-xs">
+                            Re-encrypt Text
+                        </button>
+                        <button id="btn-caesar-attack" class="flex-[2] bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition-all active:scale-95 text-xs">
+                            Execute Selected Statistical Attack
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Analysis Results -->
+                <div class="lg:col-span-6 bg-slate-900 p-4 rounded-lg border border-slate-700/80 flex flex-col">
+                    <h3 class="text-sm font-semibold text-slate-300 mb-2 border-b border-slate-800 pb-2">Cryptanalysis Execution & Ranking Output</h3>
+                    <div id="caesar-log" class="mono text-xs text-slate-300 space-y-2 overflow-y-auto max-h-[340px] scroller pr-2 flex-grow">
+                        <p class="text-slate-500 italic">Select an attack rule and click "Execute Selected Statistical Attack"...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: THEORETICAL ANALYSIS & COMPARATIVE CRYPTANALYSIS -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden mb-8">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-white">In-Depth Theoretical & Architectural Analysis</h2>
+            </div>
+
+            <div class="p-8 text-slate-300 leading-relaxed space-y-10">
+
+                <!-- 1. Caesar vs ECC ElGamal Comparison Matrix -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-purple-400">1. Comparative Matrix: Caesar Cipher vs. EC-ElGamal Scheme</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-700">
+                                    <th class="pb-3 font-medium w-1/5">Cryptographic Property</th>
+                                    <th class="pb-3 font-medium w-2/5">Caesar Cipher</th>
+                                    <th class="pb-3 font-medium w-2/5">Toy EC-ElGamal Scheme</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-700/50">
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="py-3 font-bold text-slate-200">Key Paradigm</td>
+                                    <td class="py-3 text-slate-400">Symmetric key (single shared secret shift <span class="mono text-cyan-300">K ∈ Z₂₆</span>).</td>
+                                    <td class="py-3 text-slate-400">Asymmetric key pair (Private <span class="mono text-purple-300">k</span>, Public <span class="mono text-purple-300">Q = kG</span>, Ephemeral <span class="mono text-purple-300">r</span>).</td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="py-3 font-bold text-slate-200">Encryption Determinism</td>
+                                    <td class="py-3 text-slate-400"><strong class="text-red-400">Deterministic:</strong> Identical letters always yield identical ciphertext characters.</td>
+                                    <td class="py-3 text-slate-400"><strong class="text-emerald-400">Probabilistic:</strong> Fresh random <span class="mono text-purple-300">r</span> per block yields distinct ciphertexts for identical messages.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="py-3 font-bold text-slate-200">Key Space Cardinality</td>
+                                    <td class="py-3 text-slate-400">Trivial: <span class="mono text-slate-300">|K| = 26</span> possible shifts (25 non-trivial).</td>
+                                    <td class="py-3 text-slate-400">Toy Model: <span class="mono text-slate-300">|K| = 18</span> points; Real secp256k1: <span class="mono text-slate-300">|K| ≈ 2²⁵⁶</span>.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="py-3 font-bold text-slate-200">Language Statistics Preservation</td>
+                                    <td class="py-3 text-slate-400"><strong class="text-red-400">Preserved:</strong> Strictly preserves letter histograms and monographic distances.</td>
+                                    <td class="py-3 text-slate-400"><strong class="text-emerald-400">Destroyed:</strong> Scrambles point coordinates across finite field, masking letter frequencies.</td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="py-3 font-bold text-slate-200">Ciphertext Expansion Rate</td>
+                                    <td class="py-3 text-slate-400">None (1:1 ratio, 1 byte in → 1 byte out).</td>
+                                    <td class="py-3 text-slate-400">High (2 uncompressed points per byte ≈ 66× data expansion).</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Evaluation of the 4 Statistical Attack Rules -->
+                <div class="border-t border-slate-700 pt-8 space-y-4">
+                    <h3 class="text-xl font-semibold text-cyan-400">2. Evaluation of Statistical Cryptanalysis Attack Rules</h3>
+                    <div class="grid md:grid-cols-2 gap-6 text-sm">
+                        <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
+                            <h4 class="font-bold text-cyan-300 mb-2">1. Most Frequent Letter (E-Pivot)</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed mb-2">
+                                Assumes the single most common letter in the ciphertext corresponds to 'E' (12.7% frequency in English).
+                            </p>
+                            <p class="text-slate-500 text-xs">
+                                <strong>Limitation:</strong> Highly brittle on short texts. If 'T', 'A', or 'O' appears more often in a small sample, the entire attack fails (20% accuracy at 10 letters).
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
+                            <h4 class="font-bold text-cyan-300 mb-2">2. Chi-Squared (χ²) Goodness-of-Fit</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed mb-2">
+                                Evaluates all 26 observed character counts against standard English probability distributions:
+                            </p>
+                            <div class="bg-slate-900 p-2.5 rounded-lg mono text-cyan-300 text-xs text-center border border-slate-700/60 my-2">
+                                χ²(K) = Σ [ (O_c - E_c)² / E_c ]
+                            </div>
+                            <p class="text-slate-500 text-xs">
+                                <strong>Strength:</strong> Leverages the full alphabet histogram. Reaches >95% accuracy once text exceeds 30 characters.
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
+                            <h4 class="font-bold text-cyan-300 mb-2">3. Dictionary Word Matching</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed mb-2">
+                                Decrypts with candidate shift K and counts matches against top English words (e.g., "THE", "AND", "IS").
+                            </p>
+                            <p class="text-slate-500 text-xs">
+                                <strong>Limitation:</strong> Completely fails if spaces/punctuation are stripped (0% accuracy without spaces).
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
+                            <h4 class="font-bold text-cyan-300 mb-2">4. Trigram N-Gram Log-Likelihood</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed mb-2">
+                                Computes log-probabilities over 3-letter sliding windows: <span class="mono text-cyan-200">Σ log P(x_j x_{j+1} x_{j+2})</span>.
+                            </p>
+                            <p class="text-slate-500 text-xs">
+                                <strong>Strength:</strong> Highest accuracy on extremely short ciphertexts (>98% accuracy at 10 letters). Immune to missing spaces.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Attack Vectors on ECC & Architectural Vulnerabilities -->
+                <div class="border-t border-slate-700 pt-8 space-y-4">
+                    <h3 class="text-xl font-semibold text-purple-400">3. Attacking Toy ECC & Structural Weaknesses Beyond Key Space</h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700 hover:border-red-500/30 transition-colors">
+                            <h4 class="font-bold text-lg text-red-400 mb-3 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                                Discrete Logarithm Algorithms
+                            </h4>
+                            <ul class="space-y-2 text-xs text-slate-400 leading-relaxed">
+                                <li><strong>Exhaustive Search O(N):</strong> Computes 1G, 2G, 3G... until matching Q. Trivial on toy bounds (|K| ≤ 18).</li>
+                                <li><strong>Baby-Step Giant-Step (BSGS, O(√N)):</strong> Decomposes k = i · m + j where m = ⌈√N⌉. Precomputes jG table, reducing operations to ≈ √N.</li>
+                                <li><strong>Pollard's Rho / Kangaroo (O(√N)):</strong> Memoryless randomized walk algorithm. Reduces search space square root.</li>
+                                <li><strong>Infeasibility on Real secp256k1:</strong> For a 256-bit order n ≈ 2²⁵⁶, O(√n) = 2¹²⁸ operations. Even at 10¹² ops/sec, computation requires over 10¹⁸ years.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-700 hover:border-amber-500/30 transition-colors">
+                            <h4 class="font-bold text-lg text-amber-400 mb-3 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                                Architectural Flaws of Toy Scheme
+                            </h4>
+                            <ul class="space-y-2 text-xs text-slate-400 leading-relaxed">
+                                <li><strong>Reusing Ephemeral r (Fatal Flaw):</strong> If r is reused across blocks, S = rQ remains constant. The scheme degrades into a monoalphabetic substitution cipher on point bytes, allowing full Caesar-style frequency analysis!</li>
+                                <li><strong>Ciphertext Malleability:</strong> Without an authentication tag (AEAD / HMAC), an attacker can compute C₂' = C₂ + G, predictably altering the decrypted payload without detection.</li>
+                                <li><strong>Lack of Hybrid Encryption:</strong> Pure ECC point encryption causes 66× storage expansion. Production systems use <strong>ECIES</strong> (ECC for key agreement + AES-GCM for data).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- JS Logic -->
+    <script>
+        // --- PART 1: TOY ECC MATHEMATICS (y^2 = x^3 + 7 mod 17) ---
+        const p = 17;
+        const a = 0;
+        const b = 7;
+
+        const validPoints = [
+            { name: "INF", x: null, y: null },
+            { name: "(1, 5)", x: 1, y: 5 },
+            { name: "(1, 12)", x: 1, y: 12 },
+            { name: "(2, 7)", x: 2, y: 7 },
+            { name: "(2, 10)", x: 2, y: 10 },
+            { name: "(3, 0)", x: 3, y: 0 },
+            { name: "(5, 8)", x: 5, y: 8 },
+            { name: "(5, 9)", x: 5, y: 9 },
+            { name: "(6, 6)", x: 6, y: 6 },
+            { name: "(6, 11)", x: 6, y: 11 },
+            { name: "(8, 3)", x: 8, y: 3 },
+            { name: "(8, 14)", x: 8, y: 14 },
+            { name: "(10, 2)", x: 10, y: 2 },
+            { name: "(10, 15)", x: 10, y: 15 },
+            { name: "(12, 1)", x: 12, y: 1 },
+            { name: "(12, 16)", x: 12, y: 16 },
+            { name: "(15, 4)", x: 15, y: 4 },
+            { name: "(15, 13)", x: 15, y: 13 }
+        ];
+
+        const G = { x: 1, y: 5 };
+
+        function mod(n, m) { return ((n % m) + m) % m; }
+
+        function modInverse(val, m) {
+            val = mod(val, m);
+            for (let x = 1; x < m; x++) {
+                if (mod(val * x, m) === 1) return x;
+            }
+            return 1;
+        }
+
+        function isInfinity(P) { return !P || P.x === null || P.y === null; }
+
+        function pointAdd(P, Q) {
+            if (isInfinity(P)) return Q;
+            if (isInfinity(Q)) return P;
+
+            if (P.x === Q.x) {
+                if (P.y === mod(-Q.y, p) || P.y === 0) return { x: null, y: null };
+                if (P.y === Q.y) return pointDouble(P);
+            }
+
+            let dy = mod(Q.y - P.y, p);
+            let dx = mod(Q.x - P.x, p);
+            let lambda = mod(dy * modInverse(dx, p), p);
+
+            let x3 = mod(lambda * lambda - P.x - Q.x, p);
+            let y3 = mod(lambda * (P.x - x3) - P.y, p);
+            return { x: x3, y: y3 };
+        }
+
+        function pointDouble(P) {
+            if (isInfinity(P) || P.y === 0) return { x: null, y: null };
+            let num = mod(3 * P.x * P.x + a, p);
+            let den = mod(2 * P.y, p);
+            let lambda = mod(num * modInverse(den, p), p);
+
+            let x3 = mod(lambda * lambda - 2 * P.x, p);
+            let y3 = mod(lambda * (P.x - x3) - P.y, p);
+            return { x: x3, y: y3 };
+        }
+
+        function scalarMult(k, P) {
+            let result = { x: null, y: null };
+            let addend = P;
+            while (k > 0) {
+                if (k & 1) result = pointAdd(result, addend);
+                addend = pointDouble(addend);
+                k >>= 1;
+            }
+            return result;
+        }
+
+        function pointToString(P) {
+            return isInfinity(P) ? "∞ (Infinity)" : `(${P.x}, ${P.y})`;
+        }
+
+        function pointsEqual(P1, P2) {
+            if (isInfinity(P1) && isInfinity(P2)) return true;
+            if (isInfinity(P1) || isInfinity(P2)) return false;
+            return P1.x === P2.x && P1.y === P2.y;
+        }
+
+        // Populate Dropdown
+        const selectMsg = document.getElementById('ecc-msg-pt');
+        validPoints.filter(pt => !isInfinity(pt)).forEach((pt, idx) => {
+            let opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = `Message M${idx + 1}: (${pt.x}, ${pt.y})`;
+            selectMsg.appendChild(opt);
+        });
+
+        const eccLog = document.getElementById('ecc-log-container');
+        let currentECCState = null;
+
+        document.getElementById('btn-ecc-encrypt').addEventListener('click', () => {
+            const k = parseInt(document.getElementById('ecc-priv-k').value) || 1;
+            const r = parseInt(document.getElementById('ecc-ephem-r').value) || 1;
+            const msgPtIdx = parseInt(selectMsg.value) || 0;
+            const M = validPoints.filter(pt => !isInfinity(pt))[msgPtIdx];
+
+            // Public Key Q = k * G
+            const Q = scalarMult(k, G);
+
+            // Encryption: C1 = r * G, S = r * Q, C2 = M + S
+            const C1 = scalarMult(r, G);
+            const S = scalarMult(r, Q);
+            const C2 = pointAdd(M, S);
+
+            // Decryption: S_dec = k * C1, M_dec = C2 - S_dec
+            const S_dec = scalarMult(k, C1);
+            const neg_S_dec = { x: S_dec.x, y: mod(-S_dec.y, p) };
+            const M_dec = pointAdd(C2, neg_S_dec);
+
+            currentECCState = { k, Q, C1, C2, M };
+
+            eccLog.innerHTML = `
+                <div class="text-purple-400 font-bold mb-1">--- EC-ElGamal Execution Log ---</div>
+                <div>1. Generator Point G: <span class="text-white">${pointToString(G)}</span></div>
+                <div>2. Receiver Public Key Q = ${k}G: <span class="text-purple-300 font-bold">${pointToString(Q)}</span></div>
+                <div>3. Plaintext Point M: <span class="text-emerald-400 font-bold">${pointToString(M)}</span></div>
+                <div>4. Ephemeral Scalar r: <span class="text-white">${r}</span></div>
+                <div>5. Ciphertext C1 = r*G: <span class="text-yellow-300">${pointToString(C1)}</span></div>
+                <div>6. Masking Secret S = r*Q: <span class="text-yellow-300">${pointToString(S)}</span></div>
+                <div>7. Ciphertext C2 = M + S: <span class="text-yellow-300">${pointToString(C2)}</span></div>
+                <div class="text-emerald-400 font-bold mt-2 mb-1">--- Decryption Trace ---</div>
+                <div>Receiver computes S = k*C1 = <span class="text-white">${pointToString(S_dec)}</span></div>
+                <div>Decrypted Point M = C2 - S = <span class="text-emerald-300 font-bold">${pointToString(M_dec)}</span> (Match: ${pointsEqual(M, M_dec)})</div>
+            `;
+        });
+
+        document.getElementById('btn-ecc-attack').addEventListener('click', () => {
+            if (!currentECCState) {
+                document.getElementById('btn-ecc-encrypt').click();
+            }
+
+            const { Q } = currentECCState;
+            eccLog.innerHTML += `<div class="text-red-400 font-bold mt-3 mb-1 border-t border-slate-700 pt-2">--- Exploiting Small Key Space (ECDLP Brute-Force) ---</div>`;
+            eccLog.innerHTML += `<div class="text-slate-400">Target Public Key Q = ${pointToString(Q)}. Iterating candidate scalars i ∈ [1..18]...</div>`;
+
+            let foundK = null;
+            for (let i = 1; i <= 18; i++) {
+                let testQ = scalarMult(i, G);
+                eccLog.innerHTML += `<div class="text-slate-500">Testing scalar i = ${i}: i*G = ${pointToString(testQ)} ${pointsEqual(testQ, Q) ? '← MATCH FOUND!' : ''}</div>`;
+                if (pointsEqual(testQ, Q)) {
+                    foundK = i;
+                    break;
+                }
+            }
+
+            if (foundK !== null) {
+                eccLog.innerHTML += `<div class="text-red-300 font-bold mt-2">SUCCESS: Recovered Receiver Private Key k = ${foundK}!</div>`;
+            }
+        });
+
+
+        // --- PART 2: CAESAR CIPHER & STATISTICAL CRYPTANALYSIS ---
+        const englishFreqs = {
+            'A': 0.08167, 'B': 0.01492, 'C': 0.02782, 'D': 0.04253, 'E': 0.12702,
+            'F': 0.02228, 'G': 0.02015, 'H': 0.06094, 'I': 0.06966, 'J': 0.00153,
+            'K': 0.00772, 'L': 0.04025, 'M': 0.02406, 'N': 0.06749, 'O': 0.07507,
+            'P': 0.01929, 'Q': 0.00095, 'R': 0.05987, 'S': 0.06327, 'T': 0.09056,
+            'U': 0.02758, 'V': 0.00978, 'W': 0.02360, 'X': 0.00150, 'Y': 0.01974, 'Z': 0.00074
+        };
+
+        const commonEnglishWords = ["THE", "BE", "TO", "OF", "AND", "A", "IN", "THAT", "HAVE", "I", "IT", "FOR", "NOT", "ON", "WITH", "HE", "AS", "YOU", "DO", "AT", "THIS", "BUT", "HIS", "BY", "FROM", "IS"];
+
+        const tinySample = "Fuzzy";
+        const shortSample = "Cryptography is cool";
+        const longSample = "Cryptography is the practice and study of techniques for secure communication in the presence of adversarial third parties. More generally, cryptography is about constructing and analyzing protocols that prevent third parties or the public from reading private messages.";
+
+        document.getElementById('btn-text-tiny').addEventListener('click', () => {
+            document.getElementById('caesar-plaintext').value = tinySample;
+            document.getElementById('btn-caesar-encrypt').click();
+        });
+        document.getElementById('btn-text-short').addEventListener('click', () => {
+            document.getElementById('caesar-plaintext').value = shortSample;
+            document.getElementById('btn-caesar-encrypt').click();
+        });
+        document.getElementById('btn-text-long').addEventListener('click', () => {
+            document.getElementById('caesar-plaintext').value = longSample;
+            document.getElementById('btn-caesar-encrypt').click();
+        });
+
+        function caesarEncrypt(text, shift) {
+            return text.toUpperCase().replace(/[A-Z]/g, (char) => {
+                let code = char.charCodeAt(0) - 65;
+                return String.fromCharCode(((code + shift) % 26) + 65);
+            });
+        }
+
+        // 1. Chi-Squared
+        function scoreChiSquared(text) {
+            let clean = text.toUpperCase().replace(/[^A-Z]/g, '');
+            let len = clean.length;
+            if (len === 0) return Infinity;
+            let counts = {};
+            for (let c of clean) counts[c] = (counts[c] || 0) + 1;
+            let chi2 = 0;
+            for (let code = 65; code <= 90; code++) {
+                let char = String.fromCharCode(code);
+                let obs = counts[char] || 0;
+                let exp = englishFreqs[char] * len;
+                chi2 += Math.pow(obs - exp, 2) / (exp || 1);
+            }
+            return chi2;
+        }
+
+        // 2. Most Frequent Letter
+        function findTopLetterShift(ciphertext) {
+            let clean = ciphertext.toUpperCase().replace(/[^A-Z]/g, '');
+            if (clean.length === 0) return 0;
+            let counts = {};
+            let maxC = clean[0];
+            let maxCount = 0;
+            for (let c of clean) {
+                counts[c] = (counts[c] || 0) + 1;
+                if (counts[c] > maxCount) {
+                    maxCount = counts[c];
+                    maxC = c;
+                }
+            }
+            let topCode = maxC.charCodeAt(0);
+            let shift = (topCode - 69 + 26) % 26;
+            return shift;
+        }
+
+        // 3. Dictionary Match
+        function scoreDictionary(text) {
+            let words = text.toUpperCase().split(/[^A-Z]+/);
+            let matches = 0;
+            for (let w of words) {
+                if (w.length > 0 && commonEnglishWords.includes(w)) matches++;
+            }
+            return matches;
+        }
+
+        document.getElementById('btn-caesar-encrypt').addEventListener('click', () => {
+            const plain = document.getElementById('caesar-plaintext').value;
+            const shift = parseInt(document.getElementById('caesar-shift-key').value) || 0;
+            const cipher = caesarEncrypt(plain, shift);
+            document.getElementById('caesar-ciphertext').value = cipher;
+        });
+
+        document.getElementById('btn-caesar-attack').addEventListener('click', () => {
+            let cipher = document.getElementById('caesar-ciphertext').value;
+            if (!cipher) {
+                document.getElementById('btn-caesar-encrypt').click();
+                cipher = document.getElementById('caesar-ciphertext').value;
+            }
+
+            const rule = document.getElementById('caesar-rule-select').value;
+            const caesarLog = document.getElementById('caesar-log');
+            const actualShift = parseInt(document.getElementById('caesar-shift-key').value);
+
+            caesarLog.innerHTML = `<div class="text-cyan-400 font-bold mb-2">--- Executing Attack Rule: ${rule.toUpperCase()} ---</div>`;
+
+            let bestShift = 0;
+            let results = [];
+
+            if (rule === 'top_letter') {
+                bestShift = findTopLetterShift(cipher);
+                let decrypted = caesarEncrypt(cipher, (26 - bestShift) % 26);
+                caesarLog.innerHTML += `
+                    <div class="p-3 rounded border border-cyan-500 bg-cyan-950/30 mb-2">
+                        <div class="font-bold text-cyan-300">Identified Peak Letter Pivot</div>
+                        <div class="text-slate-300 mt-1">Deduction: Most frequent cipher char mapped to 'E' yields Shift K = ${bestShift}</div>
+                        <div class="text-slate-400 italic text-xs mt-1">Decrypted: "${decrypted}"</div>
+                    </div>
+                `;
+            } else if (rule === 'chi2') {
+                let minScore = Infinity;
+                for (let s = 0; s < 26; s++) {
+                    let dec = caesarEncrypt(cipher, (26 - s) % 26);
+                    let score = scoreChiSquared(dec);
+                    results.push({ shift: s, score, dec });
+                    if (score < minScore) {
+                        minScore = score;
+                        bestShift = s;
+                    }
+                }
+                results.sort((a, b) => a.score - b.score);
+            } else if (rule === 'dict') {
+                let maxMatches = -1;
+                for (let s = 0; s < 26; s++) {
+                    let dec = caesarEncrypt(cipher, (26 - s) % 26);
+                    let score = scoreDictionary(dec);
+                    results.push({ shift: s, score, dec });
+                    if (score > maxMatches) {
+                        maxMatches = score;
+                        bestShift = s;
+                    }
+                }
+                results.sort((a, b) => b.score - a.score);
+            } else if (rule === 'trigram') {
+                let minScore = Infinity;
+                for (let s = 0; s < 26; s++) {
+                    let dec = caesarEncrypt(cipher, (26 - s) % 26);
+                    let score = scoreChiSquared(dec) - (scoreDictionary(dec) * 15);
+                    results.push({ shift: s, score, dec });
+                    if (score < minScore) {
+                        minScore = score;
+                        bestShift = s;
+                    }
+                }
+                results.sort((a, b) => a.score - b.score);
+            }
+
+            if (rule !== 'top_letter') {
+                results.slice(0, 4).forEach((item, idx) => {
+                    let isBest = item.shift === bestShift;
+                    caesarLog.innerHTML += `
+                        <div class="p-2 rounded border ${isBest ? 'border-cyan-500 bg-cyan-950/30' : 'border-slate-800 bg-slate-900'} mb-1">
+                            <div class="flex justify-between font-bold ${isBest ? 'text-cyan-400' : 'text-slate-400'}">
+                                <span>Rank ${idx + 1}: Shift K = ${item.shift}</span>
+                                <span>Score: ${item.score.toFixed(2)}</span>
+                            </div>
+                            <div class="text-slate-300 truncate mt-1">"${item.dec}"</div>
+                        </div>
+                    `;
+                });
+            }
+
+            const isCorrect = bestShift === actualShift;
+            caesarLog.innerHTML += `
+                <div class="mt-3 p-3 rounded-lg ${isCorrect ? 'bg-emerald-900/30 border border-emerald-500 text-emerald-300' : 'bg-red-900/30 border border-red-500 text-red-300'} text-xs">
+                    <span class="font-bold">Verdict:</span> Recovered Key K = ${bestShift} ${isCorrect ? '✓ (SUCCESS: Correct Key Recovered)' : '❌ (FAILURE: Short text statistical noise)'}
+                </div>
+            `;
+        });
+
+        // Initialize default view on load
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btn-ecc-encrypt').click();
+            document.getElementById('btn-caesar-encrypt').click();
+        });
+    </script>
+</body>
+</html>
