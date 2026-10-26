@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMWK 3: Stochastic Penetration Models</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --accent-primary: #f59e0b; /* Amber */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-custom {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            transition: all 0.2s;
+        }
+        .input-custom:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 1px var(--accent-primary);
+        }
+        .canvas-container {
+            background: #0b1120;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 250px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col">
+
+    <!-- Back to Index Button -->
+    <div class="max-w-7xl mx-auto w-full mb-4 mt-2">
+        <a href="index.html" class="group inline-flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 hover:border-amber-500/50 rounded-xl text-sm text-slate-400 hover:text-amber-400 transition-all shadow-sm backdrop-blur-sm mono">
+            <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Index
+        </a>
+    </div>
+
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto w-full mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-500">
+                    Stochastic Penetration Models
+                </h1>
+                <p class="text-slate-400 mt-2">
+                    LLN & CLT visualization across <span class="mono text-amber-300">n</span> systems and <span class="mono text-amber-300">m</span> attackers
+                </p>
+            </div>
+            <div class="text-left md:text-right bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                <div class="text-sm text-slate-400">Assignment: <span class="mono text-white">HMWK 3</span></div>
+                <div class="text-sm text-slate-400">Target Theorems: <span class="mono text-white">LLN & CLT</span></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-8">
+
+        <!-- CONTROLS & SIMULATOR -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-amber-400">Interactive Simulator:</span> Set Parameters
+                </h2>
+                <span class="text-xs bg-amber-900/40 text-amber-300 border border-amber-700/50 px-2.5 py-1 rounded-full mono">Random Walks</span>
+            </div>
+            
+            <div class="p-6 grid lg:grid-cols-5 gap-6">
+                <!-- Parameters -->
+                <div class="lg:col-span-1 space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Stochastic Model</label>
+                        <select id="sim-model" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                            <option value="rademacher">Rademacher {-1, +1}</option>
+                            <option value="bernoulli">Bernoulli {0, 1}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Probability P(X=1) (for Bernoulli)</label>
+                        <input type="number" id="sim-prob" value="0.5" step="0.1" min="0" max="1" class="input-custom w-full rounded-lg p-2 mono text-sm opacity-50" disabled>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Systems n (Time Steps)</label>
+                        <input type="number" id="sim-n" value="500" min="10" max="5000" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Attackers m (Trajectories)</label>
+                        <input type="number" id="sim-m" value="100" min="1" max="500" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                    </div>
+                    <button id="btn-simulate" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 px-4 rounded-lg shadow transition-all active:scale-95 text-sm mt-4">
+                        Run Penetration Attack
+                    </button>
+                </div>
+
+                <!-- Trajectories Display -->
+                <div class="lg:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    <div class="space-y-2 fade-in">
+                        <div class="flex justify-between items-end">
+                            <h3 class="text-sm font-semibold text-slate-300">Total Score</h3>
+                            <span class="text-xs mono text-amber-400">Sₙ</span>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="canvas-sn" width="400" height="250"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 fade-in" style="animation-delay: 0.1s;">
+                        <div class="flex justify-between items-end">
+                            <h3 class="text-sm font-semibold text-slate-300">Average Score</h3>
+                            <span class="text-xs mono text-amber-400">Sₙ / n</span>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="canvas-avg" width="400" height="250"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 fade-in" style="animation-delay: 0.2s;">
+                        <div class="flex justify-between items-end">
+                            <h3 class="text-sm font-semibold text-slate-300">Normalized Score</h3>
+                            <span class="text-xs mono text-amber-400">Sₙ / √n</span>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="canvas-norm" width="400" height="250"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- DISTRIBUTION & CLT -->
+        <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-rose-400">Final Distribution:</span> Central Limit Theorem (CLT)
+                </h2>
+                <span class="text-xs text-slate-400">Red dashed line = Expected Value | Red curve = Theoretical Gaussian</span>
+            </div>
+            <div class="p-6 grid lg:grid-cols-3 gap-6 items-center">
+                <div class="lg:col-span-1 text-sm text-slate-300 space-y-4">
+                    <p>
+                        By plotting the final normalized score <span class="mono text-amber-300 text-xs">Sₙ / √n</span> of all <span class="mono text-amber-300 text-xs">m</span> attackers at step <span class="mono text-amber-300 text-xs">n</span>, we observe the empirical density.
+                    </p>
+                    <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                        <strong class="text-rose-400 block mb-2">Theoretical Overlay:</strong>
+                        <ul class="space-y-2 text-xs text-slate-400">
+                            <li><strong>Rademacher:</strong> Converges strictly to the Standard Normal distribution <span class="mono text-white">N(0, 1)</span>.</li>
+                            <li><strong>Bernoulli:</strong> Converges to <span class="mono text-white">N(p√n, p(1-p))</span> as the mean scales over time.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 canvas-container">
+                    <canvas id="canvas-hist" width="800" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- THEORETICAL ANALYSIS -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden mb-8">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-white">In-Depth Theoretical Analysis & Statistical Interpretations</h2>
+            </div>
+            
+            <div class="p-8 text-slate-300 leading-relaxed space-y-10">
+                
+                <!-- 1. The Models -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-amber-400">1. Stochastic Penetration Models</h3>
+                    <p class="text-sm text-slate-400">
+                        The security of the system infrastructure is evaluated through a discrete-time stochastic process. The increments <span class="mono text-amber-300">Xᵢ</span> represent the penetration score gained at each system step.
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-4 mt-4 text-sm">
+                        <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg">
+                            <h4 class="text-white font-bold mb-2">Bernoulli Model</h4>
+                            <p class="text-slate-400 text-xs mb-2">Asymmetric model where an attacker either succeeds (+1) or fails (0).</p>
+                            <ul class="text-xs text-slate-500 font-mono space-y-1">
+                                <li>Xᵢ ∈ {0, 1}</li>
+                                <li>E[X] = p</li>
+                                <li>Var(X) = p(1-p)</li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg">
+                            <h4 class="text-white font-bold mb-2">Rademacher Model</h4>
+                            <p class="text-slate-400 text-xs mb-2">Symmetric zero-mean model representing balanced forward and backward steps.</p>
+                            <ul class="text-xs text-slate-500 font-mono space-y-1">
+                                <li>Xᵢ ∈ {-1, +1}</li>
+                                <li>E[X] = 0</li>
+                                <li>Var(X) = 1</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. LLN -->
+                <div class="border-t border-slate-700 pt-8">
+                    <h3 class="text-xl font-semibold text-amber-400 mb-4">2. Law of Large Numbers (LLN) & Average Score</h3>
+                    <p class="text-sm text-slate-400 mb-4">
+                        The <strong>Weak Law of Large Numbers</strong> dictates that the sample average converges in probability toward the expected value. Looking at the "Average Score" trajectories (<span class="mono text-amber-300">Sₙ/n</span>), they initially display large sample fluctuations, but as <span class="mono text-slate-300">n</span> grows, all trajectories compress tightly around the theoretical expected value line:
+                    </p>
+                    <div class="bg-slate-900 p-4 border border-slate-700 rounded-lg text-center font-mono text-emerald-400 text-sm">
+                        lim (n→∞) P(|Sₙ/n - E[X]| > ε) = 0
+                    </div>
+                </div>
+
+                <!-- 3. Variance Behavior -->
+                <div class="border-t border-slate-700 pt-8">
+                    <h3 class="text-xl font-semibold text-amber-400 mb-4">3. Behavior of the Variance Under Normalization</h3>
+                    <p class="text-sm text-slate-400 mb-4">
+                        Normalizing the total sum <span class="mono text-amber-300">Sₙ</span> alters how the variance behaves across time:
+                    </p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-700">
+                                    <th class="pb-3 font-medium w-1/4">Quantity</th>
+                                    <th class="pb-3 font-medium w-1/4">Mathematical Form</th>
+                                    <th class="pb-3 font-medium w-2/4">Variance Scaling</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-700/50 font-mono text-xs">
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="py-4 text-slate-200 font-sans">Total Score</td>
+                                    <td class="py-4 text-amber-400">Sₙ</td>
+                                    <td class="py-4 text-slate-400">Var(Sₙ) = n · σ² <span class="text-red-400 ml-2 font-sans text-[11px] uppercase">(Diverges Linearly)</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="py-4 text-slate-200 font-sans">Average Score</td>
+                                    <td class="py-4 text-amber-400">Sₙ / n</td>
+                                    <td class="py-4 text-slate-400">Var(Sₙ/n) = σ² / n <span class="text-emerald-400 ml-2 font-sans text-[11px] uppercase">(Converges to 0)</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="py-4 text-slate-200 font-sans">Normalized Score</td>
+                                    <td class="py-4 text-amber-400">Sₙ / √n</td>
+                                    <td class="py-4 text-slate-400">Var(Sₙ/√n) = σ² <span class="text-cyan-400 ml-2 font-sans text-[11px] uppercase">(Remains Constant)</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. CLT -->
+                <div class="border-t border-slate-700 pt-8">
+                    <h3 class="text-xl font-semibold text-amber-400 mb-4">4. Central Limit Theorem (CLT)</h3>
+                    <p class="text-sm text-slate-400 leading-relaxed mb-4">
+                        Because normalizing by <span class="mono text-slate-300">√n</span> stabilizes the variance, the distribution of <span class="mono text-amber-300">Sₙ / √n</span> converges in distribution to a Gaussian curve. 
+                        In the <strong>Rademacher</strong> model (E[X]=0, Var(X)=1), it converges directly to the Standard Normal Distribution <span class="mono text-white">N(0, 1)</span>.
+                    </p>
+                    <p class="text-sm text-slate-400 leading-relaxed">
+                        For the <strong>Bernoulli</strong> model, standardizing to a pure <span class="mono text-white">N(0, 1)</span> requires centering by subtracting the mean: <span class="mono text-white">(Sₙ - np) / √(np(1-p)) → N(0, 1)</span>. When plotted directly as <span class="mono text-amber-300">Sₙ / √n</span>, the Gaussian curve shifts horizontally over time with mean <span class="mono text-slate-300">p√n</span>.
+                    </p>
+                </div>
+
+                <!-- 5. Systems vs Attackers Context -->
+                <div class="border-t border-slate-700 pt-8">
+                    <h3 class="text-xl font-semibold text-amber-400 mb-4">5. Interpreting Systems (n) and Attackers (m)</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700 border-l-4 border-l-cyan-500">
+                            <h4 class="font-bold text-white mb-2">Systems (n): The Time Horizon</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed">
+                                Represents the sequence length of system steps. As <span class="mono">n → ∞</span>, asymptotic limit theorems take control. The average score concentrates, and the standardized score distribution smooths out into a continuous Gaussian bell curve.
+                            </p>
+                        </div>
+                        <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700 border-l-4 border-l-emerald-500">
+                            <h4 class="font-bold text-white mb-2">Attackers (m): Sample Resolution</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed">
+                                Dictates the number of independent random walk trajectories simulated. Increasing <span class="mono">m</span> does not change the theoretical limits, but it increases the <em>empirical resolution</em>, making the density histogram fit the theoretical Gaussian curve with higher precision.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const elModel = document.getElementById('sim-model');
+        const elProb = document.getElementById('sim-prob');
+        const btnSimulate = document.getElementById('btn-simulate');
+
+        elModel.addEventListener('change', () => {
+            if (elModel.value === 'rademacher') {
+                elProb.disabled = true;
+                elProb.classList.add('opacity-50');
+            } else {
+                elProb.disabled = false;
+                elProb.classList.remove('opacity-50');
+            }
+        });
+
+        function simulate() {
+            const model = elModel.value;
+            const p = parseFloat(elProb.value) || 0.5;
+            const n = parseInt(document.getElementById('sim-n').value) || 500;
+            const m = parseInt(document.getElementById('sim-m').value) || 100;
+
+            const walksSn = [];
+            const walksAvg = [];
+            const walksNorm = [];
+
+            for (let i = 0; i < m; i++) {
+                let current_S = 0;
+                let w_sn = [0];
+                let w_avg = [0];
+                let w_norm = [0];
+
+                for (let step = 1; step <= n; step++) {
+                    let X = 0;
+                    if (model === 'rademacher') {
+                        X = Math.random() < 0.5 ? 1 : -1;
+                    } else {
+                        X = Math.random() < p ? 1 : 0;
+                    }
+                    current_S += X;
+                    w_sn.push(current_S);
+                    w_avg.push(current_S / step);
+                    w_norm.push(current_S / Math.sqrt(step));
+                }
+                walksSn.push(w_sn);
+                walksAvg.push(w_avg);
+                walksNorm.push(w_norm);
+            }
+
+            drawTrajectories('canvas-sn', walksSn, n, model, p, 'sum');
+            drawTrajectories('canvas-avg', walksAvg, n, model, p, 'avg');
+            drawTrajectories('canvas-norm', walksNorm, n, model, p, 'norm');
+
+            const finalNorms = walksNorm.map(w => w[n]);
+            drawHistogram('canvas-hist', finalNorms, model, p, n);
+        }
+
+        function drawTrajectories(canvasId, walks, n, model, p, type) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+
+            let min = Infinity;
+            let max = -Infinity;
+            for (let w of walks) {
+                for (let val of w) {
+                    if (val < min) min = val;
+                    if (val > max) max = val;
+                }
+            }
+
+            const range = max - min;
+            if (range === 0) {
+                max += 1; min -= 1;
+            } else {
+                max += range * 0.1;
+                min -= range * 0.1;
+            }
+
+            // Draw trajectories
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.2)'; // amber
+
+            for (let w of walks) {
+                ctx.beginPath();
+                for (let step = 0; step <= n; step++) {
+                    const x = (step / n) * width;
+                    const y = height - ((w[step] - min) / (max - min)) * height;
+                    if (step === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            // Draw Expected Value Reference Line
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)'; // rose
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 2;
+            for (let step = 0; step <= n; step++) {
+                const expectedX = (model === 'rademacher') ? 0 : p;
+                let val = 0;
+                if (type === 'sum') val = step * expectedX;
+                else if (type === 'avg') val = expectedX;
+                else if (type === 'norm') val = (step === 0) ? 0 : (step * expectedX) / Math.sqrt(step);
+                
+                const x = (step / n) * width;
+                const y = height - ((val - min) / (max - min)) * height;
+                if (step === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawHistogram(canvasId, finalValues, model, p, n) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+
+            const min = Math.min(...finalValues);
+            const max = Math.max(...finalValues);
+            const range = max - min;
+            
+            const numBins = Math.max(15, Math.floor(Math.sqrt(finalValues.length)));
+            const binWidth = (range === 0) ? 1 : range / numBins;
+            
+            const bins = new Array(numBins).fill(0);
+            for (let val of finalValues) {
+                let idx = Math.floor((val - min) / binWidth);
+                if (idx >= numBins) idx = numBins - 1;
+                bins[idx]++;
+            }
+            
+            for (let i = 0; i < numBins; i++) {
+                bins[i] = bins[i] / (finalValues.length * binWidth);
+            }
+            
+            const maxDensity = Math.max(...bins, 0.5);
+            const displayMax = maxDensity * 1.2;
+
+            // Draw bars
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.9)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < numBins; i++) {
+                const x = (i * binWidth / (max - min)) * width;
+                const w = (binWidth / (max - min)) * width;
+                const h = (bins[i] / displayMax) * height;
+                ctx.fillRect(x, height - h, w, h);
+                ctx.strokeRect(x, height - h, w, h);
+            }
+
+            // Theoretical Gaussian Overlay
+            let mu = (model === 'rademacher') ? 0 : p * Math.sqrt(n);
+            let variance = (model === 'rademacher') ? 1 : p * (1 - p);
+            let sigma = Math.sqrt(variance);
+
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(244, 63, 94, 0.9)';
+            ctx.lineWidth = 2.5;
+            for (let i = 0; i <= width; i++) {
+                const x_val = min + (i / width) * (max - min);
+                const y_val = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x_val - mu) / sigma, 2));
+                const y_px = height - (y_val / displayMax) * height;
+                if (i === 0) ctx.moveTo(i, y_px);
+                else ctx.lineTo(i, y_px);
+            }
+            ctx.stroke();
+        }
+
+        // Run on load
+        window.addEventListener('DOMContentLoaded', simulate);
+        btnSimulate.addEventListener('click', simulate);
+
+    </script>
+</body>
+</html>
