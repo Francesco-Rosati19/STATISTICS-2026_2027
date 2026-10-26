@@ -112,7 +112,7 @@
                         <input type="number" id="sim-m" value="100" min="1" max="500" class="input-custom w-full rounded-lg p-2 mono text-sm">
                     </div>
                     <button id="btn-simulate" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 px-4 rounded-lg shadow transition-all active:scale-95 text-sm mt-4">
-                        Run Penetration Attack
+                        Run Stochastic Simulation
                     </button>
                 </div>
 
@@ -304,19 +304,22 @@
         const elProb = document.getElementById('sim-prob');
         const btnSimulate = document.getElementById('btn-simulate');
 
+        // Logica per gestire dinamicamente la probabilità nell'interfaccia
         elModel.addEventListener('change', () => {
             if (elModel.value === 'rademacher') {
-                elProb.disabled = true;
+                elProb.value = "0.5"; // Forza visivamente a 0.5
+                elProb.disabled = true; // Disabilita l'input
                 elProb.classList.add('opacity-50');
             } else {
-                elProb.disabled = false;
+                elProb.disabled = false; // Riabilita l'input per Bernoulli
                 elProb.classList.remove('opacity-50');
             }
         });
 
         function simulate() {
             const model = elModel.value;
-            const p = parseFloat(elProb.value) || 0.5;
+            // Seleziona la probabilità coerentemente con il modello
+            const p = (model === 'rademacher') ? 0.5 : (parseFloat(elProb.value) || 0.5);
             const n = parseInt(document.getElementById('sim-n').value) || 500;
             const m = parseInt(document.getElementById('sim-m').value) || 100;
 
@@ -380,7 +383,6 @@
                 min -= range * 0.1;
             }
 
-            // Draw trajectories
             ctx.lineWidth = 1;
             ctx.strokeStyle = 'rgba(245, 158, 11, 0.2)'; // amber
 
@@ -395,7 +397,7 @@
                 ctx.stroke();
             }
 
-            // Draw Expected Value Reference Line
+            // Linea del valore atteso (Rossa)
             ctx.beginPath();
             ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)'; // rose
             ctx.setLineDash([5, 5]);
@@ -445,7 +447,6 @@
             const maxDensity = Math.max(...bins, 0.5);
             const displayMax = maxDensity * 1.2;
 
-            // Draw bars
             ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
             ctx.strokeStyle = 'rgba(245, 158, 11, 0.9)';
             ctx.lineWidth = 1;
@@ -458,7 +459,7 @@
                 ctx.strokeRect(x, height - h, w, h);
             }
 
-            // Theoretical Gaussian Overlay
+            // Sovrapposizione Curva Gaussiana Teorica
             let mu = (model === 'rademacher') ? 0 : p * Math.sqrt(n);
             let variance = (model === 'rademacher') ? 1 : p * (1 - p);
             let sigma = Math.sqrt(variance);
@@ -476,7 +477,7 @@
             ctx.stroke();
         }
 
-        // Run on load
+        // Avvia simulazione al caricamento e al click
         window.addEventListener('DOMContentLoaded', simulate);
         btnSimulate.addEventListener('click', simulate);
 
