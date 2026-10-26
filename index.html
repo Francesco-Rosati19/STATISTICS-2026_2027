@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cryptography Homework Hub</title>
+    <title>Cryptography & Statistics Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -31,54 +31,68 @@
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center justify-center">
 
     <div class="max-w-3xl w-full text-center mb-12 fade-in">
-        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-emerald-400 mb-4">
-            Cryptography Hub
+        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 mb-4">
+            Statistics & Cryptography Hub
         </h1>
         <p class="text-slate-400 text-lg">
-            Raccolta degli homework svolti durante il corso. Seleziona un modulo per visualizzare l'app interattiva e le analisi crittografiche.
+            Raccolta degli homework svolti durante il corso. Seleziona un modulo per visualizzare l'app interattiva e le analisi stocastiche/crittografiche.
         </p>
     </div>
 
-    <div class="max-w-6xl w-full grid md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in" style="animation-delay: 0.1s;">
+    <div class="max-w-7xl w-full grid md:grid-cols-2 lg:grid-cols-4 gap-6 fade-in" style="animation-delay: 0.1s;">
         
         <!-- Link a Homework 1 -->
-        <a href="homework1.html" class="group block bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-lg hover:border-cyan-500/50 hover:shadow-cyan-500/20 transition-all duration-300 flex flex-col justify-between">
+        <a href="homework1.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-cyan-500/50 hover:shadow-cyan-500/20 transition-all duration-300 flex flex-col justify-between">
             <div>
                 <div class="text-cyan-400 font-mono text-sm mb-2">HMWK 1</div>
-                <h2 class="text-2xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors">ECC Scalar Multiplication</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">
-                    App interattiva che visualizza l'algoritmo <span class="mono text-cyan-200">Q = k * G</span> su una curva ellittica giocattolo. Esplorazione del Problema del Logaritmo Discreto e differenze con le funzioni di Hash.
+                <h2 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors">ECC Scalar Multiplication</h2>
+                <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                    App interattiva che visualizza l'algoritmo <span class="mono text-cyan-200">Q = k * G</span> su curva ellittica giocattolo. Problema del Logaritmo Discreto e funzioni di Hash.
                 </p>
             </div>
-            <div class="flex items-center text-cyan-400 font-semibold group-hover:translate-x-2 transition-transform text-sm">
+            <div class="flex items-center text-cyan-400 font-semibold group-hover:translate-x-2 transition-transform text-xs">
+                Visualizza Progetto <span class="ml-2">→</span>
+            </div>
+        </a>
+
+        <!-- Link a Homework 1.2 -->
+        <a href="homework1.2.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-emerald-500/50 hover:shadow-emerald-500/20 transition-all duration-300 flex flex-col justify-between">
+            <div>
+                <div class="text-emerald-400 font-mono text-sm mb-2">HMWK 1.2</div>
+                <h2 class="text-xl font-bold text-white mb-3 group-hover:text-emerald-300 transition-colors">Ethereum Wallet Pipeline</h2>
+                <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                    Analisi degli standard (BIP-39, BIP-32, EIP-55) e primitive (<span class="mono text-emerald-200">secp256k1</span>, Keccak-256) per derivare un indirizzo da mnemonica.
+                </p>
+            </div>
+            <div class="flex items-center text-emerald-400 font-semibold group-hover:translate-x-2 transition-transform text-xs">
                 Visualizza Progetto <span class="ml-2">→</span>
             </div>
         </a>
 
         <!-- Link a Homework 2 -->
-        <a href="homework2.html" class="group block bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-lg hover:border-emerald-500/50 hover:shadow-emerald-500/20 transition-all duration-300 flex flex-col justify-between">
+        <a href="homework2.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-purple-500/50 hover:shadow-purple-500/20 transition-all duration-300 flex flex-col justify-between">
             <div>
-                <div class="text-emerald-400 font-mono text-sm mb-2">HMWK 2</div>
-                <h2 class="text-2xl font-bold text-white mb-3 group-hover:text-emerald-300 transition-colors">Ethereum Wallet Pipeline</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">
-                    Analisi degli standard (BIP-39, BIP-32, EIP-55) e delle primitive (<span class="mono text-emerald-200">secp256k1</span>, Keccak-256) per derivare un indirizzo da una frase mnemonica.
+                <div class="text-purple-400 font-mono text-sm mb-2">HMWK 2</div>
+                <h2 class="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors">Toy ECC & Caesar Cryptanalysis</h2>
+                <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                    Cifratura ElGamal su curva <span class="mono text-purple-200">secp256k1</span>, Cifrario di Cesare e analisi di frequenza statistica (<span class="mono text-purple-200">χ²</span>).
                 </p>
             </div>
-            <div class="flex items-center text-emerald-400 font-semibold group-hover:translate-x-2 transition-transform text-sm">
+            <div class="flex items-center text-purple-400 font-semibold group-hover:translate-x-2 transition-transform text-xs">
                 Visualizza Progetto <span class="ml-2">→</span>
             </div>
         </a>
 
         <!-- Link a Homework 3 -->
-        <a href="homework3.html" class="group block bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-lg hover:border-purple-500/50 hover:shadow-purple-500/20 transition-all duration-300 flex flex-col justify-between">
+        <a href="homework3.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-amber-500/50 hover:shadow-amber-500/20 transition-all duration-300 flex flex-col justify-between">
             <div>
-                <div class="text-purple-400 font-mono text-sm mb-2">HMWK 3</div>
-                <h2 class="text-2xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors">Toy ECC & Caesar Cryptanalysis</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">
-                    Cifratura ElGamal su curva <span class="mono text-purple-200">secp256k1</span>, Cifrario di Cesare e confronto tra analisi di frequenza statistica (<span class="mono text-purple-200">χ²</span>) e attacco al logaritmo discreto.
+                <div class="text-amber-400 font-mono text-sm mb-2">HMWK 3</div>
+                <h2 class="text-xl font-bold text-white mb-3 group-hover:text-amber-300 transition-colors">Stochastic Penetration Models</h2>
+                <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                    Processi stocastici di penetrazione (Bernoulli e Rademacher), traiettorie su <span class="mono text-amber-200">n</span> sistemi ed empirical proof di LLN e CLT.
                 </p>
             </div>
-            <div class="flex items-center text-purple-400 font-semibold group-hover:translate-x-2 transition-transform text-sm">
+            <div class="flex items-center text-amber-400 font-semibold group-hover:translate-x-2 transition-transform text-xs">
                 Visualizza Progetto <span class="ml-2">→</span>
             </div>
         </a>
