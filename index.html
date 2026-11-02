@@ -30,8 +30,8 @@
 </head>
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center justify-center">
 
-    <div class="max-w-3xl w-full text-center mb-12 fade-in">
-        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 mb-4">
+    <div class="max-w-4xl w-full text-center mb-12 fade-in">
+        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-rose-400 mb-4">
             Statistics & Cryptography Hub
         </h1>
         <p class="text-slate-400 text-lg">
@@ -39,7 +39,8 @@
         </p>
     </div>
 
-    <div class="max-w-7xl w-full grid md:grid-cols-2 lg:grid-cols-4 gap-6 fade-in" style="animation-delay: 0.1s;">
+    <!-- Layout a griglia aggiornato per bilanciare 5 elementi -->
+    <div class="max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in" style="animation-delay: 0.1s;">
         
         <!-- Link a Homework 1 -->
         <a href="homework1.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-cyan-500/50 hover:shadow-cyan-500/20 transition-all duration-300 flex flex-col justify-between">
@@ -55,7 +56,7 @@
             </div>
         </a>
 
-        <!-- Link a Homework 1.1 (Ethereum Wallet Pipeline su homework2.html) -->
+        <!-- Link a Homework 1.1 -->
         <a href="homework2.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-emerald-500/50 hover:shadow-emerald-500/20 transition-all duration-300 flex flex-col justify-between">
             <div>
                 <div class="text-emerald-400 font-mono text-sm mb-2">HMWK 1.1</div>
@@ -69,7 +70,7 @@
             </div>
         </a>
 
-        <!-- Link a Homework 2 (Toy ECC & Caesar Cryptanalysis su homework3.html) -->
+        <!-- Link a Homework 2 -->
         <a href="homework3.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-purple-500/50 hover:shadow-purple-500/20 transition-all duration-300 flex flex-col justify-between">
             <div>
                 <div class="text-purple-400 font-mono text-sm mb-2">HMWK 2</div>
@@ -83,7 +84,7 @@
             </div>
         </a>
 
-        <!-- Link a Homework 3 (Stochastic Penetration Models su homework3.ok.html) -->
+        <!-- Link a Homework 3 -->
         <a href="homework3.ok.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-amber-500/50 hover:shadow-amber-500/20 transition-all duration-300 flex flex-col justify-between">
             <div>
                 <div class="text-amber-400 font-mono text-sm mb-2">HMWK 3</div>
@@ -93,6 +94,20 @@
                 </p>
             </div>
             <div class="flex items-center text-amber-400 font-semibold group-hover:translate-x-2 transition-transform text-xs">
+                Visualizza Progetto <span class="ml-2">→</span>
+            </div>
+        </a>
+
+        <!-- Link a Homework 4 -->
+        <a href="homework4.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-rose-500/50 hover:shadow-rose-500/20 transition-all duration-300 flex flex-col justify-between">
+            <div>
+                <div class="text-rose-400 font-mono text-sm mb-2">HMWK 4</div>
+                <h2 class="text-xl font-bold text-white mb-3 group-hover:text-rose-300 transition-colors">Welford's Recurrence & Sampling Estimators</h2>
+                <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                    Calcolo online di media e varianza (Welford) su <span class="mono text-rose-200">m</span> hacker e <span class="mono text-rose-200">n</span> sistemi. Decadimento della varianza campionaria <span class="mono text-rose-200">O(1/n)</span>.
+                </p>
+            </div>
+            <div class="flex items-center text-rose-400 font-semibold group-hover:translate-x-2 transition-transform text-xs">
                 Visualizza Progetto <span class="ml-2">→</span>
             </div>
         </a>
