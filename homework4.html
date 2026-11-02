@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMWK 4: Welford's Recurrence & Sampling Estimators</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --accent-primary: #f43f5e; /* Rose 500 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-custom {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            transition: all 0.2s;
+        }
+        .input-custom:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 1px var(--accent-primary);
+        }
+        .canvas-container {
+            background: #0b1120;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 220px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col">
+
+    <!-- Back to Index Button -->
+    <div class="max-w-7xl mx-auto w-full mb-4 mt-2">
+        <a href="index.html" class="group inline-flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 hover:border-rose-500/50 rounded-xl text-sm text-slate-400 hover:text-rose-400 transition-all shadow-sm backdrop-blur-sm mono">
+            <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Index
+        </a>
+    </div>
+
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto w-full mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-pink-500">
+                    Welford's Recurrence & Sampling Estimators
+                </h1>
+                <p class="text-slate-400 mt-2">
+                    Running Mean & Variance across <span class="mono text-rose-300">m</span> hackers attacking <span class="mono text-rose-300">n</span> systems.
+                </p>
+            </div>
+            <div class="text-left md:text-right bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                <div class="text-sm text-slate-400">Assignment: <span class="mono text-white">HMWK 4</span></div>
+                <div class="text-sm text-slate-400">Algorithm: <span class="mono text-white">Welford's Online Variance</span></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-8">
+
+        <!-- EX 1: MATHEMATICAL DERIVATION -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden fade-in">
+            <!-- IDENTICAL SECTION HEADER -->
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-rose-400">Ex 1: Welford's Recurrence Formulas</h2>
+            </div>
+            
+            <div class="p-8 text-slate-300 leading-relaxed space-y-8">
+                
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-white">1. Knuth's Approach for the Mean</h3>
+                    <p class="text-sm text-slate-400">
+                        By definition, the mean at step <span class="mono text-white">k</span> is <span class="mono text-white">x̄ₖ = (1/k) ∑ xᵢ</span>. Multiplying by <span class="mono text-white">k</span> and splitting the sum to isolate the last element yields the recurrence:
+                    </p>
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg text-center font-mono text-rose-300 text-sm space-y-3">
+                        <div>k · x̄ₖ = (k - 1) · x̄ₖ₋₁ + xₖ</div>
+                        <div class="w-1/2 mx-auto border-t border-slate-700 my-2"></div>
+                        <div class="font-bold">x̄ₖ = x̄ₖ₋₁ + (xₖ - x̄ₖ₋₁) / k</div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-white">2. Deriving Welford's Sum of Squares & Variance</h3>
+                    <p class="text-sm text-slate-400">
+                        Following the same logic, let <span class="mono text-white">Mₖ = Σ (xᵢ - x̄ₖ)²</span> be the Sum of Squares (SS). We isolate the <span class="mono text-white">k</span>-th term and substitute the mean difference <span class="mono text-white">(xᵢ - x̄ₖ) = (xᵢ - x̄ₖ₋₁) - (xₖ - x̄ₖ₋₁) / k</span>:
+                    </p>
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg text-center font-mono text-rose-300 text-sm space-y-3">
+                        <div>Mₖ = (xₖ - x̄ₖ)² + Σ (xᵢ - x̄ₖ)² <span class="text-slate-500 text-xs ml-2">(from i=1 to k-1)</span></div>
+                        <div class="text-slate-400 text-xs">...expanding the binomial inside the sum and canceling cross-terms yields...</div>
+                        <div class="font-bold">Mₖ = Mₖ₋₁ + (xₖ - x̄ₖ₋₁) · (xₖ - x̄ₖ)</div>
+                    </div>
+                    <p class="text-sm text-slate-400">
+                        From this exact recurrence for the Sum of Squares, the <strong>Sample Variance</strong> is trivially derived at any step <span class="mono text-white">k ≥ 2</span> by applying Bessel's correction (dividing by <span class="mono text-white">k - 1</span>):
+                    </p>
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg text-center font-mono text-rose-300 text-sm font-bold">
+                        sₖ² = Mₖ / (k - 1)
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-white">3. JavaScript Implementation (3-Line Core Logic)</h3>
+                    <p class="text-sm text-slate-400">
+                        Translating the above recurrence formulas into code requires exactly 3 core lines. This approach prevents catastrophic floating-point cancellation.
+                    </p>
+                    <pre class="bg-[#0b1120] p-4 rounded-lg border border-slate-700 text-sm mono text-emerald-400 overflow-x-auto"><code>// Online update for a new score 'x' at step 'k' (k ≥ 1):
+const delta = x - mean;
+mean += delta / k;           // 1. Knuth's Mean
+M2 += delta * (x - mean);    // 2. Welford's Sum of Squares
+
+// Note: Sample Variance is calculated as s2 = M2 / (k - 1) for k ≥ 2</code></pre>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- EX 2: SIMULATION INTERFACE -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden fade-in" style="animation-delay: 0.1s;">
+            <!-- IDENTICAL SECTION HEADER -->
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-rose-400">Ex 2: Sampling Mean & Variance Simulator</h2>
+            </div>
+            
+            <div class="p-6 grid lg:grid-cols-5 gap-6">
+                <!-- Controls -->
+                <div class="lg:col-span-1 space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Score Distribution (Range 0-10)</label>
+                        <select id="sim-dist" class="input-custom w-full rounded-lg p-2 mono text-sm cursor-pointer">
+                            <option value="uniform_cont">Continuous Uniform U[0, 10]</option>
+                            <option value="uniform_disc">Discrete Uniform U{0, 10}</option>
+                            <option value="binomial">Binomial B(10, 0.5)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Dynamic Theoretical Values -->
+                    <div class="bg-slate-900/50 border border-slate-700 p-3 rounded-lg text-xs mono space-y-1">
+                        <div class="text-slate-400">Theoretical Parameters:</div>
+                        <div class="text-cyan-400">μ  = <span id="theory-mu">5.000</span></div>
+                        <div class="text-rose-400">σ² = <span id="theory-sigma2">8.333</span></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Systems n (Length of Trajectory)</label>
+                        <input type="number" id="sim-n" value="200" min="10" max="2000" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Hackers m (Number of Trajectories)</label>
+                        <input type="number" id="sim-m" value="100" min="10" max="500" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                    </div>
+                    <button id="btn-simulate" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-3 px-4 rounded-lg shadow transition-all active:scale-95 text-sm mt-4">
+                        Run Simulation
+                    </button>
+                </div>
+
+                <!-- Live Charts -->
+                <div class="lg:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-end">
+                            <h3 class="text-sm font-semibold text-slate-300">Trajectories of Sampling Means (x̄ₖ)</h3>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="canvas-means"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-end">
+                            <h3 class="text-sm font-semibold text-slate-300">Trajectories of Sampling Variances (sₖ²)</h3>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="canvas-vars"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Result Data Board -->
+            <div class="bg-slate-900 border-t border-slate-700 p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center font-mono">
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Grand Avg of Means</div>
+                        <div id="out-mean-avg" class="text-xl text-cyan-400 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Grand Avg of Variances</div>
+                        <div id="out-var-avg" class="text-xl text-rose-400 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Empirical Var(x̄)</div>
+                        <div id="out-mean-var" class="text-xl text-slate-300 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Empirical Var(s²)</div>
+                        <div id="out-var-var" class="text-xl text-slate-300 font-bold">-</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATISTICAL CONCLUSIONS -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden mb-8 fade-in" style="animation-delay: 0.2s;">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-white">Statistical Conclusions</h2>
+            </div>
+            
+            <div class="p-8 text-slate-300 leading-relaxed space-y-8 text-sm">
+                
+                <div class="space-y-4">
+                    <h4 class="font-bold text-rose-400 text-lg">1. What conclusions can you draw from comparing the averages?</h4>
+                    <p class="text-slate-400 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                        By comparing the <span class="text-white font-semibold">Grand Average of Sampling Means</span> with the theoretical <span class="mono text-cyan-300">μ</span>, and the <span class="text-white font-semibold">Grand Average of Sampling Variances</span> with the theoretical <span class="mono text-rose-300">σ²</span>, we observe that they match almost perfectly. 
+                        This proves mathematically that both estimators are <strong>Unbiased Estimators</strong> (their expected value equals the true population parameter). Specifically for the variance, this validates the necessity of Bessel's correction <span class="mono">(k - 1)</span> used in Welford's algorithm.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <h4 class="font-bold text-rose-400 text-lg">2. Why are these results useful in inferential statistics?</h4>
+                    <p class="text-slate-400 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                        In real-world inferential statistics, we never know the true population parameters, and we only have access to a <em>single</em> sample (e.g., a single hacker's trajectory). Knowing that our estimators are unbiased guarantees that our calculations do not systematically overestimate or underestimate the system's defensive strength. We can confidently use sample statistics to draw generalized conclusions about the whole population.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <h4 class="font-bold text-cyan-400 text-lg">3. How does increasing systems (n) affect estimator variability?</h4>
+                    <p class="text-slate-400 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                        If you repeat the experiment increasing the number of systems <span class="mono text-white">n</span> (e.g., from 50 to 500), you will see the trajectories on the canvas violently compress into a flat line. Mathematically, the variability collapses as <span class="mono text-white">O(1/n)</span>:
+                        <br><br>
+                        • <span class="font-mono text-white">Var(x̄)</span> scales exactly as <span class="font-mono text-cyan-300">σ² / n</span>.<br>
+                        • <span class="font-mono text-white">Var(s²)</span> also decays proportionally to <span class="font-mono text-rose-300">1 / n</span>.
+                        <br><br>
+                        <strong>Conclusion:</strong> Increasing the sample size <span class="mono">n</span> guarantees <em>consistency</em>. The larger the sample, the smaller the Standard Error, meaning the sample estimates become virtually identical to the true theoretical parameters.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const btnSimulate = document.getElementById('btn-simulate');
+        const distSelector = document.getElementById('sim-dist');
+        const theoryMuLabel = document.getElementById('theory-mu');
+        const theorySigmaLabel = document.getElementById('theory-sigma2');
+
+        let currentMu = 5.0;
+        let currentSigma2 = 100 / 12;
+
+        // Update Theoretical parameters when distribution changes
+        distSelector.addEventListener('change', () => {
+            const dist = distSelector.value;
+            if (dist === 'uniform_cont') {
+                currentMu = 5.0;
+                currentSigma2 = 100 / 12; // ~8.333
+            } else if (dist === 'uniform_disc') {
+                currentMu = 5.0;
+                currentSigma2 = 120 / 12; // 10.0
+            } else if (dist === 'binomial') {
+                currentMu = 5.0; // n=10, p=0.5 -> np = 5
+                currentSigma2 = 2.5; // np(1-p) = 10 * 0.5 * 0.5 = 2.5
+            }
+            theoryMuLabel.innerText = currentMu.toFixed(3);
+            theorySigmaLabel.innerText = currentSigma2.toFixed(3);
+            simulate(); // Auto-rerun on change
+        });
+
+        // Generate score based on selected distribution
+        function generateScore(dist) {
+            if (dist === 'uniform_cont') {
+                return Math.random() * 10;
+            } else if (dist === 'uniform_disc') {
+                return Math.floor(Math.random() * 11);
+            } else if (dist === 'binomial') {
+                let successes = 0;
+                for(let i=0; i<10; i++) {
+                    if (Math.random() < 0.5) successes++;
+                }
+                return successes;
+            }
+            return 0;
+        }
+
+        function simulate() {
+            const n = parseInt(document.getElementById('sim-n').value) || 200;
+            const m = parseInt(document.getElementById('sim-m').value) || 100;
+            const dist = distSelector.value;
+
+            const meanTrajectories = [];
+            const varTrajectories = [];
+            const finalMeans = [];
+            const finalVars = [];
+
+            for (let hacker = 0; hacker < m; hacker++) {
+                let mean = 0;
+                let M2 = 0;
+                
+                const tMean = [];
+                const tVar = [];
+
+                for (let k = 1; k <= n; k++) {
+                    const score = generateScore(dist);
+                    
+                    // Welford's Core 3-Line Logic Applied
+                    const delta = score - mean;
+                    mean += delta / k;
+                    M2 += delta * (score - mean);
+                    
+                    const variance = k > 1 ? M2 / (k - 1) : 0;
+
+                    tMean.push(mean);
+                    tVar.push(variance);
+                }
+                
+                meanTrajectories.push(tMean);
+                varTrajectories.push(tVar);
+                finalMeans.push(mean);
+                finalVars.push(tVar[n-1]);
+            }
+
+            // Calculate Grand Averages and Empirical Variances of Estimators
+            let sumMeans = 0, sumVars = 0;
+            for(let i=0; i<m; i++){
+                sumMeans += finalMeans[i];
+                sumVars += finalVars[i];
+            }
+            const grandAvgMean = sumMeans / m;
+            const grandAvgVar = sumVars / m;
+
+            let M2_means = 0, M2_vars = 0;
+            for(let i=0; i<m; i++){
+                M2_means += Math.pow(finalMeans[i] - grandAvgMean, 2);
+                M2_vars += Math.pow(finalVars[i] - grandAvgVar, 2);
+            }
+            const varOfMeans = M2_means / (m > 1 ? m - 1 : 1);
+            const varOfVars = M2_vars / (m > 1 ? m - 1 : 1);
+
+            // Update UI Data Board
+            document.getElementById('out-mean-avg').innerText = grandAvgMean.toFixed(4);
+            document.getElementById('out-var-avg').innerText = grandAvgVar.toFixed(4);
+            document.getElementById('out-mean-var').innerText = varOfMeans.toFixed(5);
+            document.getElementById('out-var-var').innerText = varOfVars.toFixed(5);
+
+            // Draw Charts (Max 30 trajectories for visual clarity)
+            const pathsToDraw = Math.min(m, 30);
+            drawTrajectories('canvas-means', meanTrajectories.slice(0, pathsToDraw), n, currentMu, 0, 10);
+            drawTrajectories('canvas-vars', varTrajectories.slice(0, pathsToDraw), n, currentSigma2, 0, 15);
+        }
+
+        function drawTrajectories(canvasId, trajectories, n, targetVal, yMin, yMax) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            
+            // Fix resolution scaling
+            canvas.width = width;
+            canvas.height = height;
+            
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw Expected Value Line (Red Dashed)
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)'; // Rose 500
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 2;
+            const targetY = height - ((targetVal - yMin) / (yMax - yMin)) * height;
+            ctx.moveTo(0, targetY);
+            ctx.lineTo(width, targetY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw Trajectories
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)'; // Sky 400 with opacity
+
+            for (let t of trajectories) {
+                ctx.beginPath();
+                for (let step = 0; step < n; step++) {
+                    const x = (step / n) * width;
+                    const y = height - ((t[step] - yMin) / (yMax - yMin)) * height;
+                    if (step === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        // Run on Load
+        window.addEventListener('DOMContentLoaded', simulate);
+        btnSimulate.addEventListener('click', simulate);
+
+    </script>
+</body>
+</html>
