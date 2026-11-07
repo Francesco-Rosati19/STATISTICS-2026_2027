@@ -31,7 +31,7 @@
 <body class="min-h-screen p-4 md:p-8 flex flex-col items-center justify-center">
 
     <div class="max-w-4xl w-full text-center mb-12 fade-in">
-        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-rose-400 mb-4">
+        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 mb-4">
             Statistics & Cryptography Hub
         </h1>
         <p class="text-slate-400 text-lg">
@@ -39,7 +39,7 @@
         </p>
     </div>
 
-    <!-- Layout a griglia aggiornato per bilanciare 5 elementi -->
+    <!-- Griglia a 3 colonne per accomodare perfettamente 6 carte (2 righe da 3) -->
     <div class="max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in" style="animation-delay: 0.1s;">
         
         <!-- Link a Homework 1 -->
@@ -102,12 +102,26 @@
         <a href="homework4.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-rose-500/50 hover:shadow-rose-500/20 transition-all duration-300 flex flex-col justify-between">
             <div>
                 <div class="text-rose-400 font-mono text-sm mb-2">HMWK 4</div>
-                <h2 class="text-xl font-bold text-white mb-3 group-hover:text-rose-300 transition-colors">Welford's Recurrence & Sampling Estimators</h2>
+                <h2 class="text-xl font-bold text-white mb-3 group-hover:text-rose-300 transition-colors">Welford's Recurrence Estimators</h2>
                 <p class="text-slate-400 text-xs leading-relaxed mb-6">
                     Calcolo online di media e varianza (Welford) su <span class="mono text-rose-200">m</span> hacker e <span class="mono text-rose-200">n</span> sistemi. Decadimento della varianza campionaria <span class="mono text-rose-200">O(1/n)</span>.
                 </p>
             </div>
             <div class="flex items-center text-rose-400 font-semibold group-hover:translate-x-2 transition-transform text-xs">
+                Visualizza Progetto <span class="ml-2">→</span>
+            </div>
+        </a>
+
+        <!-- Link a Homework 5 -->
+        <a href="homework5.html" class="group block bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-pink-500/50 hover:shadow-pink-500/20 transition-all duration-300 flex flex-col justify-between">
+            <div>
+                <div class="text-pink-400 font-mono text-sm mb-2">HMWK 5</div>
+                <h2 class="text-xl font-bold text-white mb-3 group-hover:text-pink-300 transition-colors">Riemann, Lebesgue & Normal CDF</h2>
+                <p class="text-slate-400 text-xs leading-relaxed mb-6">
+                    Confronto tra partizioni di dominio (Riemann) e range (Lebesgue). Teorema di Liouville e calcolo della <span class="mono text-pink-200">CDF Normale</span> tramite <span class="mono text-pink-200">erf</span>.
+                </p>
+            </div>
+            <div class="flex items-center text-pink-400 font-semibold group-hover:translate-x-2 transition-transform text-xs">
                 Visualizza Progetto <span class="ml-2">→</span>
             </div>
         </a>
