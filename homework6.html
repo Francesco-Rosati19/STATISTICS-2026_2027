@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMWK 6: Statistical Independence & Chi-Square Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --accent-primary: #14b8a6; /* Teal 500 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-custom {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            transition: all 0.2s;
+        }
+        .input-custom:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 1px var(--accent-primary);
+        }
+        .canvas-container {
+            background: #0b1120;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 260px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col">
+
+    <!-- Back to Index Button -->
+    <div class="max-w-7xl mx-auto w-full mb-4 mt-2">
+        <a href="index.html" class="group inline-flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 hover:border-teal-500/50 rounded-xl text-sm text-slate-400 hover:text-teal-400 transition-all shadow-sm backdrop-blur-sm mono">
+            <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Index
+        </a>
+    </div>
+
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto w-full mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-cyan-400">
+                    Statistical Independence & Contingency Analysis
+                </h1>
+                <p class="text-slate-400 mt-2">
+                    Joint, marginal & conditional frequencies, expected counts, Pearson's <span class="mono text-teal-300">χ²</span> test, and causality.
+                </p>
+            </div>
+            <div class="text-left md:text-right bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                <div class="text-sm text-slate-400">Assignment: <span class="mono text-white">HMWK 6</span></div>
+                <div class="text-sm text-slate-400">Core Tools: <span class="mono text-white">Contingency Tables & χ²</span></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-8">
+
+        <!-- ================= SECTION 1: THEORETICAL CONCEPTS ================= -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden fade-in">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-teal-400">1. Theoretical Foundations of Statistical Independence</h2>
+            </div>
+            
+            <div class="p-8 text-slate-300 leading-relaxed space-y-8">
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Probability Theory -->
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg text-sm space-y-3">
+                        <h3 class="text-lg font-semibold text-white">A. Independence in Probability</h3>
+                        <p class="text-slate-400">
+                            Two events <span class="mono text-white">A</span> and <span class="mono text-white">B</span> are statistically independent if knowing that one occurred does not alter the probability of the other:
+                        </p>
+                        <div class="bg-slate-950/60 p-3 rounded border border-slate-800 font-mono text-center text-teal-300 text-xs space-y-1">
+                            <div>P(A ∩ B) = P(A) · P(B)</div>
+                            <div>P(A | B) = P(A) &nbsp;&nbsp;(for P(B) &gt; 0)</div>
+                        </div>
+                        <p class="text-slate-400 text-xs">
+                            For two discrete random variables <span class="mono text-white">X</span> and <span class="mono text-white">F</span>, independence requires the joint distribution to factorize into the product of marginals across <strong>all</strong> pairs <span class="mono text-white">(xᵢ, fⱼ)</span>.
+                        </p>
+                    </div>
+
+                    <!-- Statistical Sampling Theory -->
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg text-sm space-y-3">
+                        <h3 class="text-lg font-semibold text-white">B. Independence in Statistics (Sample)</h3>
+                        <p class="text-slate-400">
+                            Given <span class="mono text-white">N</span> bivariate observations <span class="mono text-white">(X, F)</span> with cell counts <span class="mono text-white">Oᵢⱼ</span>, row totals <span class="mono text-white">Rᵢ</span>, and column totals <span class="mono text-white">Cⱼ</span>, expected frequencies under <span class="mono text-white">H₀</span> (independence) are:
+                        </p>
+                        <div class="bg-slate-950/60 p-3 rounded border border-slate-800 font-mono text-center text-teal-300 text-xs space-y-1">
+                            <div>Eᵢⱼ = N · (Rᵢ / N) · (Cⱼ / N) = (Rᵢ · Cⱼ) / N</div>
+                            <div>f(F = fⱼ | X = xᵢ) = Oᵢⱼ / Rᵢ</div>
+                        </div>
+                        <p class="text-slate-400 text-xs">
+                            Because finite samples exhibit random sampling noise, we test <span class="mono text-white">H₀: P(X, F) = P(X)P(F)</span> using Pearson's Chi-square statistic.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Chi-Square & Effect Size Formulas -->
+                <div class="space-y-3">
+                    <h3 class="text-xl font-semibold text-white">C. Pearson's Chi-Square Statistic & Cramér's V</h3>
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg font-mono text-teal-300 text-sm text-center space-y-3">
+                        <div>χ² = ∑ᵢ ∑ⱼ [ (Oᵢⱼ − Eᵢⱼ)² / Eᵢⱼ ] &nbsp;&nbsp;&nbsp; with &nbsp;&nbsp;&nbsp; df = (r − 1)(c − 1)</div>
+                        <div class="w-1/2 mx-auto border-t border-slate-700"></div>
+                        <div class="text-xs text-slate-300">
+                            p-value = P(χ²_df ≥ χ²_obs) = Q(df / 2, χ²_obs / 2) &nbsp;&nbsp;|&nbsp;&nbsp; Cramér's V = √[ χ² / (N · min(r − 1, c − 1)) ]
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= SECTION 2: INTERACTIVE DATASET & CONTINGENCY ENGINE ================= -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden fade-in" style="animation-delay: 0.1s;">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                <h2 class="text-2xl font-bold text-teal-400">2. Interactive Bivariate Dataset & Contingency Tables</h2>
+                <span class="text-xs bg-teal-950/60 text-teal-300 border border-teal-700/50 px-3 py-1 rounded-full mono">Significance Level α = 0.05</span>
+            </div>
+
+            <div class="p-6 grid lg:grid-cols-5 gap-6">
+                <!-- Dataset Controls & Raw Records -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Select Bivariate Dataset (X, F)</label>
+                        <select id="dataset-select" class="input-custom w-full rounded-lg p-2.5 mono text-sm cursor-pointer">
+                            <option value="phishing">1. Security Training (X) vs Phishing Action (F) [Dependent]</option>
+                            <option value="independent">2. Server Node (X) vs Packet Status (F) [Independent]</option>
+                            <option value="protocol">3. Network Protocol (X) vs IDS Alert (F) [Strong Dep.]</option>
+                            <option value="custom">4. Custom Raw Dataset (Edit CSV Pairs Below)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-400">Raw Bivariate Records (Format: <span class="mono text-teal-300">X,F</span>)</label>
+                            <span id="record-count-badge" class="text-[11px] mono text-slate-400">N = 0</span>
+                        </div>
+                        <textarea id="raw-data-input" rows="7" class="input-custom w-full rounded-lg p-3 mono text-xs leading-relaxed" placeholder="X,F&#10;CategoryA,Outcome1&#10;CategoryB,Outcome2"></textarea>
+                        <p class="text-[11px] text-slate-500 mt-1">Each line represents one statistical unit <span class="mono">(xₖ, fₖ)</span>. Edit values and click Compute.</p>
+                    </div>
+
+                    <button id="btn-compute" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 px-4 rounded-lg shadow transition-all active:scale-95 text-sm">
+                        Build Tables & Run χ² Test
+                    </button>
+                </div>
+
+                <!-- Conditional Distribution Chart & Hypothesis Verdict -->
+                <div class="lg:col-span-3 flex flex-col justify-between space-y-4">
+                    <div class="space-y-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                            <h3 class="text-sm font-semibold text-slate-300">Conditional Distribution P(F | X) vs Marginal Baseline</h3>
+                            <span class="text-[11px] text-slate-400">Dashed line = Marginal P(F = f₁)</span>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="canvas-conditional"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Interpretation Banner -->
+                    <div id="verdict-box" class="bg-slate-900 p-4 rounded-lg border border-slate-700 text-sm space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white">Statistical Test Verdict:</span>
+                            <span id="verdict-badge" class="px-2.5 py-0.5 rounded text-xs mono font-bold bg-teal-900/50 text-teal-300 border border-teal-700">-</span>
+                        </div>
+                        <p id="verdict-text" class="text-xs text-slate-400 leading-relaxed pt-1">
+                            Run the calculation to inspect statistical independence.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Summary Strip -->
+            <div class="bg-slate-900 border-t border-b border-slate-700 p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center font-mono">
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Sample Size (N) & df</div>
+                        <div id="kpi-n-df" class="text-lg text-white font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Pearson's χ² Statistic</div>
+                        <div id="kpi-chi2" class="text-lg text-teal-400 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">p-value (Upper Tail)</div>
+                        <div id="kpi-pval" class="text-lg text-cyan-400 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Cramér's V (Strength)</div>
+                        <div id="kpi-cramers" class="text-lg text-slate-200 font-bold">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Programmatically Generated Tables -->
+            <div class="p-8 space-y-8">
+                
+                <!-- Table 1: Observed Counts & Marginal Frequencies -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-semibold text-white">A. Contingency Table: Observed Counts (Oᵢⱼ) & Marginal Frequencies</h3>
+                    <p class="text-xs text-slate-400">Absolute counts with row totals <span class="mono">Rᵢ</span>, column totals <span class="mono">Cⱼ</span>, and relative marginal frequencies <span class="mono">fᵢ· = Rᵢ/N</span>, <span class="mono">f·ⱼ = Cⱼ/N</span>.</p>
+                    <div class="overflow-x-auto bg-slate-900 rounded-lg border border-slate-700 p-4" id="table-observed-container"></div>
+                </div>
+
+                <!-- Table 2: Conditional Frequencies -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <h3 class="text-lg font-semibold text-white">B1. Conditional Frequencies P(F | X)</h3>
+                        <p class="text-xs text-slate-400">Row profiles <span class="mono">Oᵢⱼ / Rᵢ</span> (each row sums to 100%). Under independence, all rows are identical.</p>
+                        <div class="overflow-x-auto bg-slate-900 rounded-lg border border-slate-700 p-4" id="table-cond-row-container"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <h3 class="text-lg font-semibold text-white">B2. Conditional Frequencies P(X | F)</h3>
+                        <p class="text-xs text-slate-400">Column profiles <span class="mono">Oᵢⱼ / Cⱼ</span> (each column sums to 100%).</p>
+                        <div class="overflow-x-auto bg-slate-900 rounded-lg border border-slate-700 p-4" id="table-cond-col-container"></div>
+                    </div>
+                </div>
+
+                <!-- Table 3: Expected Frequencies & Cell Contributions -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-semibold text-white">C. Expected Frequencies Under Independence (Eᵢⱼ) & χ² Contributions</h3>
+                    <p class="text-xs text-slate-400">Each cell displays <span class="mono text-teal-300">Eᵢⱼ = (Rᵢ · Cⱼ) / N</span> and its individual discrepancy term <span class="mono text-slate-300">(Oᵢⱼ − Eᵢⱼ)² / Eᵢⱼ</span>.</p>
+                    <div class="overflow-x-auto bg-slate-900 rounded-lg border border-slate-700 p-4" id="table-expected-container"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= SECTION 3: CONCLUSIONS & CAUSALITY ================= -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden mb-8 fade-in" style="animation-delay: 0.2s;">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-teal-400">3. Conclusions: Statistical Association vs. Causality</h2>
+            </div>
+            
+            <div class="p-8 text-slate-300 leading-relaxed space-y-8 text-sm">
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-slate-900/60 p-5 rounded-lg border border-slate-700 space-y-3">
+                        <h3 class="text-lg font-bold text-white">1. Interpreting the Chi-Square Result</h3>
+                        <p class="text-slate-400">
+                            • <strong>When p-value &lt; α (e.g., 0.05):</strong> The observed discrepancy between <span class="mono text-white">Oᵢⱼ</span> and <span class="mono text-white">Eᵢⱼ</span> is too large to be explained by random sampling variation alone. We reject <span class="mono text-white">H₀</span> and conclude that <span class="mono text-teal-300">X</span> and <span class="mono text-teal-300">F</span> are <strong>statistically dependent</strong>.<br><br>
+                            • <strong>When p-value ≥ α:</strong> The data are compatible with the independence model <span class="mono text-white">Eᵢⱼ</span>. Note that failing to reject <span class="mono text-white">H₀</span> does not mathematically prove exact independence, especially in small samples.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-5 rounded-lg border border-slate-700 border-l-4 border-l-teal-500 space-y-3">
+                        <h3 class="text-lg font-bold text-white">2. Association Does Not Imply Causation</h3>
+                        <p class="text-slate-400">
+                            The <span class="mono text-white">χ²</span> test is completely <strong>symmetric</strong> in <span class="mono text-white">X</span> and <span class="mono text-white">F</span>, whereas causality is directional. Detecting a statistical association only proves that the joint distribution does not factorize; it can arise from:
+                        </p>
+                        <ul class="list-disc list-inside text-xs text-slate-300 space-y-1.5">
+                            <li><strong>Confounding Variables (Z):</strong> A hidden third factor (e.g., user seniority or department) influences both training completion (<span class="mono">X</span>) and phishing clicks (<span class="mono">F</span>).</li>
+                            <li><strong>Reverse Causality:</strong> Experiencing a security incident (<span class="mono">F</span>) might cause users to take training (<span class="mono">X</span>).</li>
+                            <li><strong>Selection Bias & Simpson's Paradox:</strong> Aggregating heterogeneous groups can create spurious associations or reverse real trends. Establishing causality requires <strong>Randomized Controlled Trials (RCTs)</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Code Snippet -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-semibold text-white">3. Core Programmatic Implementation (JavaScript)</h3>
+                    <pre class="bg-[#0b1120] p-4 rounded-lg border border-slate-700 text-xs mono text-teal-300 overflow-x-auto"><code>// Programmatic Contingency Table, Expected Frequencies & Chi-Square from raw pairs [x, f]
+const O = rows.map(() =&gt; cols.map(() =&gt; 0));
+for (const [x, f] of records) O[rowIdx.get(x)][colIdx.get(f)]++;
+
+const N = records.length;
+const R = O.map(row =&gt; row.reduce((a, b) =&gt; a + b, 0));               // Row marginals
+const C = cols.map((_, j) =&gt; O.reduce((sum, row) =&gt; sum + row[j], 0)); // Col marginals
+
+let chi2 = 0;
+const E = O.map((row, i) =&gt; row.map((obs, j) =&gt; {
+    const exp = (R[i] * C[j]) / N;
+    if (exp &gt; 0) chi2 += Math.pow(obs - exp, 2) / exp;
+    return exp;
+}));
+const df = (rows.length - 1) * (cols.length - 1);</code></pre>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // PRESET DATASETS GENERATOR
+        // ==========================================
+        function buildPresetCSV(type) {
+            const lines = ["X,F"];
+            const pushPairs = (x, f, count) => {
+                for (let i = 0; i < count; i++) lines.push(`${x},${f}`);
+            };
+
+            if (type === "phishing") {
+                // 120 observations: Clear dependence between Training Level (X) and Phishing Click (F)
+                pushPairs("None", "Clicked", 24);
+                pushPairs("None", "Ignored", 16);
+                pushPairs("Basic", "Clicked", 14);
+                pushPairs("Basic", "Ignored", 26);
+                pushPairs("Advanced", "Clicked", 6);
+                pushPairs("Advanced", "Ignored", 34);
+            } else if (type === "independent") {
+                // 120 observations: Exact / near-exact statistical independence (~40% Flagged across all nodes)
+                pushPairs("Node_Alpha", "Flagged", 16);
+                pushPairs("Node_Alpha", "Clean", 24);
+                pushPairs("Node_Beta", "Flagged", 15);
+                pushPairs("Node_Beta", "Clean", 25);
+                pushPairs("Node_Gamma", "Flagged", 17);
+                pushPairs("Node_Gamma", "Clean", 23);
+            } else if (type === "protocol") {
+                // 150 observations: Strong association between Protocol (X) and IDS Alert (F)
+                pushPairs("TCP", "Normal", 52);
+                pushPairs("TCP", "Alert", 8);
+                pushPairs("UDP", "Normal", 30);
+                pushPairs("UDP", "Alert", 20);
+                pushPairs("ICMP", "Normal", 10);
+                pushPairs("ICMP", "Alert", 30);
+            } else {
+                pushPairs("Group_1", "Success", 18);
+                pushPairs("Group_1", "Failure", 12);
+                pushPairs("Group_2", "Success", 9);
+                pushPairs("Group_2", "Failure", 21);
+            }
+            return lines.join("\n");
+        }
+
+        // ==========================================
+        // REGULARIZED INCOMPLETE GAMMA FOR P-VALUE
+        // ==========================================
+        function logGamma(z) {
+            const c = [
+                76.18009172947146, -86.50532032941677, 24.01409824083091,
+                -1.231739572450155, 0.001208650973866179, -0.000005395239384953
+            ];
+            let x = z, y = z;
+            let tmp = x + 5.5;
+            tmp -= (x + 0.5) * Math.log(tmp);
+            let ser = 1.000000000190015;
+            for (let j = 0; j < 6; j++) ser += c[j] / ++y;
+            return -tmp + Math.log(2.5066282746310005 * ser / x);
+        }
+
+        // Upper regularized incomplete gamma function Q(a, x) = P(Chi2_df >= chi2)
+        function gammaQ(a, x) {
+            if (x <= 0) return 1.0;
+            if (a <= 0) return 0.0;
+            const gln = logGamma(a);
+
+            if (x < a + 1.0) {
+                // Series representation for P(a, x), then 1 - P(a, x)
+                let ap = a;
+                let del = 1.0 / a;
+                let sum = del;
+                for (let n = 1; n <= 200; n++) {
+                    ap += 1.0;
+                    del *= x / ap;
+                    sum += del;
+                    if (Math.abs(del) < Math.abs(sum) * 1e-14) break;
+                }
+                const p = sum * Math.exp(-x + a * Math.log(x) - gln);
+                return Math.max(0, Math.min(1, 1.0 - p));
+            } else {
+                // Lentz's continued fraction for Q(a, x)
+                let b = x + 1.0 - a;
+                let c = 1.0 / 1e-30;
+                let d = 1.0 / b;
+                let h = d;
+                for (let i = 1; i <= 200; i++) {
+                    let an = -i * (i - a);
+                    b += 2.0;
+                    d = an * d + b;
+                    if (Math.abs(d) < 1e-30) d = 1e-30;
+                    c = b + an / c;
+                    if (Math.abs(c) < 1e-30) c = 1e-30;
+                    d = 1.0 / d;
+                    let del = d * c;
+                    h *= del;
+                    if (Math.abs(del - 1.0) < 1e-14) break;
+                }
+                return Math.max(0, Math.min(1, Math.exp(-x + a * Math.log(x) - gln) * h));
+            }
+        }
+
+        // ==========================================
+        // PARSE RAW RECORDS & COMPUTE CONTINGENCY
+        // ==========================================
+        function parseRecords(rawText) {
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            const records = [];
+            let xHeader = "X", fHeader = "F";
+
+            lines.forEach((line, idx) => {
+                const parts = line.split(/[,;\t]/).map(p => p.trim());
+                if (parts.length < 2) return;
+                if (idx === 0 && (parts[0].toLowerCase() === "x" || parts[1].toLowerCase() === "f" || parts[1].toLowerCase() === "y")) {
+                    xHeader = parts[0];
+                    fHeader = parts[1];
+                    return;
+                }
+                records.push([parts[0], parts[1]]);
+            });
+            return { records, xHeader, fHeader };
+        }
+
+        function runAnalysis() {
+            const rawText = document.getElementById("raw-data-input").value;
+            const { records, xHeader, fHeader } = parseRecords(rawText);
+            const N = records.length;
+
+            document.getElementById("record-count-badge").innerText = `N = ${N}`;
+
+            if (N === 0) return;
+
+            const xCats = [];
+            const fCats = [];
+            const xMap = new Map();
+            const fMap = new Map();
+
+            for (const [x, f] of records) {
+                if (!xMap.has(x)) { xMap.set(x, xCats.length); xCats.push(x); }
+                if (!fMap.has(f)) { fMap.set(f, fCats.length); fCats.push(f); }
+            }
+
+            const r = xCats.length;
+            const c = fCats.length;
+
+            // 1. Observed counts O_ij
+            const O = Array.from({ length: r }, () => Array(c).fill(0));
+            for (const [x, f] of records) {
+                O[xMap.get(x)][fMap.get(f)]++;
+            }
+
+            // 2. Marginals R_i and C_j
+            const R = O.map(row => row.reduce((a, b) => a + b, 0));
+            const C = fCats.map((_, j) => O.reduce((sum, row) => sum + row[j], 0));
+
+            // 3. Expected counts E_ij and Chi-Square
+            let chi2 = 0;
+            const E = Array.from({ length: r }, () => Array(c).fill(0));
+            const contrib = Array.from({ length: r }, () => Array(c).fill(0));
+
+            for (let i = 0; i < r; i++) {
+                for (let j = 0; j < c; j++) {
+                    const exp = (R[i] * C[j]) / N;
+                    E[i][j] = exp;
+                    if (exp > 0) {
+                        const term = Math.pow(O[i][j] - exp, 2) / exp;
+                        contrib[i][j] = term;
+                        chi2 += term;
+                    }
+                }
+            }
+
+            const df = Math.max(1, (r - 1) * (c - 1));
+            const pVal = (r > 1 && c > 1) ? gammaQ(df / 2, chi2 / 2) : 1.0;
+            const minDim = Math.min(r - 1, c - 1);
+            const cramersV = (minDim > 0 && N > 0) ? Math.sqrt(chi2 / (N * minDim)) : 0;
+
+            // Update KPIs
+            document.getElementById("kpi-n-df").innerText = `${N}  (df=${df})`;
+            document.getElementById("kpi-chi2").innerText = chi2.toFixed(4);
+            document.getElementById("kpi-pval").innerText = pVal < 0.0001 ? pVal.toExponential(3) : pVal.toFixed(5);
+            document.getElementById("kpi-cramers").innerText = cramersV.toFixed(4);
+
+            // Update Verdict Box
+            const badge = document.getElementById("verdict-badge");
+            const vText = document.getElementById("verdict-text");
+            if (pVal < 0.05) {
+                badge.innerText = "DEPENDENT (Reject H₀)";
+                badge.className = "px-2.5 py-0.5 rounded text-xs mono font-bold bg-rose-950/80 text-rose-300 border border-rose-700";
+                vText.innerHTML = `Since <span class="mono text-white">p-value = ${pVal < 0.0001 ? pVal.toExponential(2) : pVal.toFixed(4)} &lt; 0.05</span>, we reject the null hypothesis of independence. Knowing <span class="mono text-teal-300">${xHeader}</span> significantly alters the conditional distribution of <span class="mono text-teal-300">${fHeader}</span> (Cramér's V = <span class="mono text-white">${cramersV.toFixed(3)}</span>).`;
+            } else {
+                badge.innerText = "INDEPENDENT (Keep H₀)";
+                badge.className = "px-2.5 py-0.5 rounded text-xs mono font-bold bg-teal-950/80 text-teal-300 border border-teal-700";
+                vText.innerHTML = `Since <span class="mono text-white">p-value = ${pVal.toFixed(4)} ≥ 0.05</span>, observed deviations from expected counts <span class="mono text-white">Eᵢⱼ</span> are consistent with random sampling noise. The variables <span class="mono text-teal-300">${xHeader}</span> and <span class="mono text-teal-300">${fHeader}</span> appear statistically independent.`;
+            }
+
+            // Render Tables & Chart
+            renderTables(xHeader, fHeader, xCats, fCats, O, R, C, N, E, contrib);
+            drawConditionalChart(xHeader, fHeader, xCats, fCats, O, R, C, N);
+        }
+
+        function renderTables(xHeader, fHeader, xCats, fCats, O, R, C, N, E, contrib) {
+            // 1. Observed + Marginals
+            let htmlObs = `<table class="w-full text-left text-xs font-mono"><thead><tr class="text-slate-400 border-b border-slate-700">
+                <th class="pb-2 pr-4">${xHeader} \\ ${fHeader}</th>`;
+            fCats.forEach(f => htmlObs += `<th class="pb-2 px-3 text-right text-slate-200">${f}</th>`);
+            htmlObs += `<th class="pb-2 pl-4 text-right text-teal-400">Row Marginal Rᵢ (fᵢ·)</th></tr></thead><tbody class="divide-y divide-slate-800">`;
+
+            xCats.forEach((x, i) => {
+                htmlObs += `<tr class="hover:bg-slate-800/50"><td class="py-2.5 pr-4 font-bold text-slate-200">${x}</td>`;
+                fCats.forEach((_, j) => {
+                    const jointPct = ((O[i][j] / N) * 100).toFixed(1);
+                    htmlObs += `<td class="py-2.5 px-3 text-right text-white">${O[i][j]} <span class="text-slate-500">(${jointPct}%)</span></td>`;
+                });
+                const rowMargPct = ((R[i] / N) * 100).toFixed(1);
+                htmlObs += `<td class="py-2.5 pl-4 text-right text-teal-300 font-bold">${R[i]} (${rowMargPct}%)</td></tr>`;
+            });
+
+            htmlObs += `<tr class="border-t-2 border-slate-700 bg-slate-950/40 font-bold text-teal-300"><td class="py-2.5 pr-4">Col Marginal Cⱼ (f·ⱼ)</td>`;
+            fCats.forEach((_, j) => {
+                const colMargPct = ((C[j] / N) * 100).toFixed(1);
+                htmlObs += `<td class="py-2.5 px-3 text-right">${C[j]} (${colMargPct}%)</td>`;
+            });
+            htmlObs += `<td class="py-2.5 pl-4 text-right text-white">N = ${N} (100%)</td></tr></tbody></table>`;
+            document.getElementById("table-observed-container").innerHTML = htmlObs;
+
+            // 2A. Conditional P(F | X)
+            let htmlCondRow = `<table class="w-full text-left text-xs font-mono"><thead><tr class="text-slate-400 border-b border-slate-700">
+                <th class="pb-2 pr-3">${xHeader}</th>`;
+            fCats.forEach(f => htmlCondRow += `<th class="pb-2 px-2 text-right">${f}</th>`);
+            htmlCondRow += `<th class="pb-2 pl-3 text-right text-teal-400">Sum</th></tr></thead><tbody class="divide-y divide-slate-800">`;
+
+            xCats.forEach((x, i) => {
+                htmlCondRow += `<tr class="hover:bg-slate-800/50"><td class="py-2 pr-3 font-bold text-slate-200">${x}</td>`;
+                fCats.forEach((_, j) => {
+                    const p = R[i] > 0 ? ((O[i][j] / R[i]) * 100).toFixed(1) : "0.0";
+                    htmlCondRow += `<td class="py-2 px-2 text-right text-cyan-300">${p}%</td>`;
+                });
+                htmlCondRow += `<td class="py-2 pl-3 text-right text-slate-400">100.0%</td></tr>`;
+            });
+            htmlCondRow += `</tbody></table>`;
+            document.getElementById("table-cond-row-container").innerHTML = htmlCondRow;
+
+            // 2B. Conditional P(X | F)
+            let htmlCondCol = `<table class="w-full text-left text-xs font-mono"><thead><tr class="text-slate-400 border-b border-slate-700">
+                <th class="pb-2 pr-3">${xHeader} \\ ${fHeader}</th>`;
+            fCats.forEach(f => htmlCondCol += `<th class="pb-2 px-2 text-right">${f}</th>`);
+            htmlCondCol += `</tr></thead><tbody class="divide-y divide-slate-800">`;
+
+            xCats.forEach((x, i) => {
+                htmlCondCol += `<tr class="hover:bg-slate-800/50"><td class="py-2 pr-3 font-bold text-slate-200">${x}</td>`;
+                fCats.forEach((_, j) => {
+                    const p = C[j] > 0 ? ((O[i][j] / C[j]) * 100).toFixed(1) : "0.0";
+                    htmlCondCol += `<td class="py-2 px-2 text-right text-teal-300">${p}%</td>`;
+                });
+                htmlCondCol += `</tr>`;
+            });
+            htmlCondCol += `<tr class="border-t border-slate-700 text-slate-400"><td class="py-2 pr-3">Sum</td>`;
+            fCats.forEach(() => htmlCondCol += `<td class="py-2 px-2 text-right">100.0%</td>`);
+            htmlCondCol += `</tr></tbody></table>`;
+            document.getElementById("table-cond-col-container").innerHTML = htmlCondCol;
+
+            // 3. Expected Frequencies & Chi2 Contributions
+            let htmlExp = `<table class="w-full text-left text-xs font-mono"><thead><tr class="text-slate-400 border-b border-slate-700">
+                <th class="pb-2 pr-4">${xHeader} \\ ${fHeader}</th>`;
+            fCats.forEach(f => htmlExp += `<th class="pb-2 px-3 text-right">${f} <span class="text-slate-500">[Eᵢⱼ | χ²ᵢⱼ]</span></th>`);
+            htmlExp += `</tr></thead><tbody class="divide-y divide-slate-800">`;
+
+            xCats.forEach((x, i) => {
+                htmlExp += `<tr class="hover:bg-slate-800/50"><td class="py-2.5 pr-4 font-bold text-slate-200">${x}</td>`;
+                fCats.forEach((_, j) => {
+                    htmlExp += `<td class="py-2.5 px-3 text-right">
+                        <span class="text-teal-300 font-bold">${E[i][j].toFixed(2)}</span>
+                        <span class="text-slate-500 mx-1">|</span>
+                        <span class="text-slate-300">${contrib[i][j].toFixed(3)}</span>
+                    </td>`;
+                });
+                htmlExp += `</tr>`;
+            });
+            htmlExp += `</tbody></table>`;
+            document.getElementById("table-expected-container").innerHTML = htmlExp;
+        }
+
+        function drawConditionalChart(xHeader, fHeader, xCats, fCats, O, R, C, N) {
+            const canvas = document.getElementById("canvas-conditional");
+            const ctx = canvas.getContext("2d");
+            const W = canvas.clientWidth;
+            const H = canvas.clientHeight;
+            canvas.width = W;
+            canvas.height = H;
+            ctx.clearRect(0, 0, W, H);
+
+            if (xCats.length === 0 || fCats.length === 0) return;
+
+            const padLeft = 45, padRight = 20, padTop = 25, padBottom = 35;
+            const plotW = W - padLeft - padRight;
+            const plotH = H - padTop - padBottom;
+
+            // Plot conditional probability of the first outcome fCats[0] given each X category
+            const targetF = fCats[0];
+            const marginalProb = C[0] / N;
+
+            // Gridlines (0%, 50%, 100%)
+            ctx.strokeStyle = "#1e293b";
+            ctx.lineWidth = 1;
+            ctx.fillStyle = "#64748b";
+            ctx.font = "11px JetBrains Mono";
+            ctx.textAlign = "right";
+
+            [0, 0.25, 0.5, 0.75, 1.0].forEach(val => {
+                const y = padTop + plotH * (1 - val);
+                ctx.beginPath();
+                ctx.moveTo(padLeft, y);
+                ctx.lineTo(W - padRight, y);
+                ctx.stroke();
+                ctx.fillText(`${Math.round(val * 100)}%`, padLeft - 8, y + 4);
+            });
+
+            // Bars for P(F = targetF | X = x_i)
+            const slotW = plotW / xCats.length;
+            const barW = Math.min(64, slotW * 0.55);
+
+            xCats.forEach((x, i) => {
+                const condProb = R[i] > 0 ? O[i][0] / R[i] : 0;
+                const barH = condProb * plotH;
+                const bx = padLeft + i * slotW + (slotW - barW) / 2;
+                const by = padTop + plotH - barH;
+
+                ctx.fillStyle = "rgba(20, 184, 166, 0.45)"; // Teal 500
+                ctx.strokeStyle = "rgba(45, 212, 191, 0.9)"; // Teal 400
+                ctx.lineWidth = 1.5;
+                ctx.fillRect(bx, by, barW, barH);
+                ctx.strokeRect(bx, by, barW, barH);
+
+                // Percentage label above bar
+                ctx.fillStyle = "#f8fafc";
+                ctx.textAlign = "center";
+                ctx.fillText(`${(condProb * 100).toFixed(1)}%`, bx + barW / 2, by - 6);
+
+                // Category label on X axis
+                ctx.fillStyle = "#94a3b8";
+                ctx.fillText(x, bx + barW / 2, H - 12);
+            });
+
+            // Dashed marginal baseline P(F = targetF)
+            const margY = padTop + plotH * (1 - marginalProb);
+            ctx.beginPath();
+            ctx.strokeStyle = "#38bdf8"; // Sky 400
+            ctx.setLineDash([6, 4]);
+            ctx.lineWidth = 2;
+            ctx.moveTo(padLeft, margY);
+            ctx.lineTo(W - padRight, margY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Legend tag
+            ctx.fillStyle = "#38bdf8";
+            ctx.textAlign = "left";
+            ctx.fillText(`P(${fHeader}=${targetF} | ${xHeader})   — Marginal: ${(marginalProb * 100).toFixed(1)}%`, padLeft, 15);
+        }
+
+        // Event Listeners
+        const datasetSelect = document.getElementById("dataset-select");
+        const rawInput = document.getElementById("raw-data-input");
+
+        datasetSelect.addEventListener("change", () => {
+            rawInput.value = buildPresetCSV(datasetSelect.value);
+            runAnalysis();
+        });
+
+        document.getElementById("btn-compute").addEventListener("click", runAnalysis);
+        window.addEventListener("resize", runAnalysis);
+
+        window.addEventListener("DOMContentLoaded", () => {
+            rawInput.value = buildPresetCSV("phishing");
+            runAnalysis();
+        });
+    </script>
+</body>
+</html>
