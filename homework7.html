@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMWK 7: Modes of Convergence & Bayesian Inference</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --accent-primary: #f97316; /* Orange 500 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-custom {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            transition: all 0.2s;
+        }
+        .input-custom:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 1px var(--accent-primary);
+        }
+        .canvas-container {
+            background: #0b1120;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 250px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col">
+
+    <!-- Back to Index Button -->
+    <div class="max-w-7xl mx-auto w-full mb-4 mt-2">
+        <a href="index.html" class="group inline-flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 hover:border-orange-500/50 rounded-xl text-sm text-slate-400 hover:text-orange-400 transition-all shadow-sm backdrop-blur-sm mono">
+            <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Index
+        </a>
+    </div>
+
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto w-full mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-400">
+                    Modes of Convergence & Bayesian Statistical Inference
+                </h1>
+                <p class="text-slate-400 mt-2">
+                    Asymptotic laws (LLN & CLT), the <span class="mono text-orange-300">√n</span> variance scaling law, and Bayesian posterior updating.
+                </p>
+            </div>
+            <div class="text-left md:text-right bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                <div class="text-sm text-slate-400">Assignment: <span class="mono text-white">HMWK 7</span></div>
+                <div class="text-sm text-slate-400">Core Tools: <span class="mono text-white">Asymptotics & Bayes' Theorem</span></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-8">
+
+        <!-- ================= PART 1: MODES OF CONVERGENCE ================= -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden fade-in">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-orange-400">Part 1: Modes of Convergence in Probability Theory</h2>
+            </div>
+            
+            <div class="p-8 text-slate-300 leading-relaxed space-y-8">
+                
+                <!-- 1.1 Comparison Table of the 4 Modes -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-white">1. The Four Main Modes of Convergence</h3>
+                    <p class="text-sm text-slate-400">
+                        Let <span class="mono text-white">X₁, X₂, ..., Xₙ</span> be a sequence of random variables and <span class="mono text-white">X</span> be a target random variable (or constant). Unlike deterministic sequences, random variables can approach a limit in four distinct mathematical senses:
+                    </p>
+                    <div class="overflow-x-auto bg-slate-900 rounded-lg border border-slate-700 p-4">
+                        <table class="w-full text-left text-xs md:text-sm">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-700">
+                                    <th class="pb-3 pr-4 font-semibold">Convergence Mode</th>
+                                    <th class="pb-3 px-4 font-semibold">Mathematical Definition</th>
+                                    <th class="pb-3 pl-4 font-semibold">Role in LLN, CLT & Statistics</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800">
+                                <tr class="hover:bg-slate-800/40">
+                                    <td class="py-3 pr-4 font-bold text-orange-400">Almost Sure (a.s.)<br><span class="mono text-[11px] text-slate-400 font-normal">Xₙ →ᵃ·ˢ· X</span></td>
+                                    <td class="py-3 px-4 font-mono text-xs text-orange-300">P({ω : limₙ→∞ Xₙ(ω) = X(ω)}) = 1</td>
+                                    <td class="py-3 pl-4 text-slate-300 text-xs">
+                                        <strong>Strong Law of Large Numbers (SLLN):</strong> <span class="mono">X̄ₙ →ᵃ·ˢ· μ</span> when <span class="mono">E[|X₁|] &lt; ∞</span>. Guarantees that almost every individual sample trajectory stabilizes at <span class="mono">μ</span> (<strong>strong consistency</strong>).
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-800/40">
+                                    <td class="py-3 pr-4 font-bold text-orange-400">Mean-Square (L²)<br><span class="mono text-[11px] text-slate-400 font-normal">Xₙ →ᴸ² X</span></td>
+                                    <td class="py-3 px-4 font-mono text-xs text-orange-300">limₙ→∞ E[(Xₙ − X)²] = 0</td>
+                                    <td class="py-3 pl-4 text-slate-300 text-xs">
+                                        <strong>Estimator Risk / MSE:</strong> Requires finite second moments (<span class="mono">σ² &lt; ∞</span>). Since <span class="mono">E[(X̄ₙ − μ)²] = σ²/n → 0</span>, it immediately proves <span class="mono">L²</span> convergence of the sample mean and implies WLLN via Markov's inequality.
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-800/40">
+                                    <td class="py-3 pr-4 font-bold text-orange-400">In Probability<br><span class="mono text-[11px] text-slate-400 font-normal">Xₙ →ᵖ X</span></td>
+                                    <td class="py-3 px-4 font-mono text-xs text-orange-300">limₙ→∞ P(|Xₙ − X| &gt; ε) = 0, ∀ε &gt; 0</td>
+                                    <td class="py-3 pl-4 text-slate-300 text-xs">
+                                        <strong>Weak Law of Large Numbers (WLLN):</strong> <span class="mono">X̄ₙ →ᵖ μ</span>. At any fixed large <span class="mono">n</span>, the probability of a deviation larger than <span class="mono">ε</span> is negligible. Defines <strong>weak consistency</strong> of estimators.
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-800/40">
+                                    <td class="py-3 pr-4 font-bold text-orange-400">In Distribution<br><span class="mono text-[11px] text-slate-400 font-normal">Xₙ →ᵈ X</span></td>
+                                    <td class="py-3 px-4 font-mono text-xs text-orange-300">limₙ→∞ Fₙ(x) = F(x) at continuity pts</td>
+                                    <td class="py-3 pl-4 text-slate-300 text-xs">
+                                        <strong>Central Limit Theorem (CLT):</strong> <span class="mono">√n(X̄ₙ − μ)/σ →ᵈ N(0, 1)</span>. Only the CDFs converge; enables asymptotic confidence intervals and p-values (combined with Slutsky's theorem).
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 1.2 Hierarchy of Implications -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg text-sm space-y-3">
+                        <h4 class="font-bold text-white">Hierarchy of Implications</h4>
+                        <div class="bg-slate-950/70 p-4 rounded border border-slate-800 font-mono text-orange-300 text-xs text-center space-y-2">
+                            <div>Almost Sure (a.s.) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Mean-Square (L²)</div>
+                            <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↙</div>
+                            <div>Convergence in Probability (→ᵖ)</div>
+                            <div>↓</div>
+                            <div>Convergence in Distribution (→ᵈ)</div>
+                        </div>
+                        <p class="text-xs text-slate-400">
+                            <strong>Key Link:</strong> <span class="mono text-white">L² ⟹ →ᵖ</span> follows from Chebyshev/Markov's inequality: <span class="mono">P(|Xₙ − X| &gt; ε) ≤ E[(Xₙ − X)²]/ε²</span>. Moreover, if <span class="mono">Xₙ →ᵈ c</span> (a constant), then <span class="mono">Xₙ →ᵖ c</span>.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg text-sm space-y-3">
+                        <h4 class="font-bold text-white">Why Reverse Implications Fail</h4>
+                        <ul class="text-xs text-slate-400 space-y-2 list-disc list-inside">
+                            <li><strong class="text-slate-200">→ᵖ and L² do not imply a.s.:</strong> Independent Bernoulli trials with <span class="mono">pₙ = 1/n</span> satisfy <span class="mono">E[Xₙ²] = 1/n → 0</span>, yet <span class="mono">∑ (1/n) = ∞</span>, so <span class="mono">Xₙ = 1</span> infinitely often (Borel–Cantelli).</li>
+                            <li><strong class="text-slate-200">a.s. does not imply L²:</strong> On <span class="mono">U ~ Uniform(0,1)</span>, <span class="mono">Xₙ = √n · 1{U &lt; 1/n} →ᵃ·ˢ· 0</span>, but <span class="mono">E[Xₙ²] = n · (1/n) = 1 ↛ 0</span>.</li>
+                            <li><strong class="text-slate-200">→ᵈ does not imply →ᵖ:</strong> If <span class="mono">X ~ N(0,1)</span> and <span class="mono">Xₙ = −X</span>, all <span class="mono">Xₙ</span> have identical CDFs, yet <span class="mono">|Xₙ − X| = 2|X| ↛ 0</span>.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 1.3 Why √n Appears: Variance Additivity & Independence -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-white">2. Why Does <span class="mono text-orange-400">√n</span> Appear? Variance Additivity & Independence</h3>
+                    <p class="text-sm text-slate-400">
+                        Consider the sum <span class="mono text-white">Sₙ = ∑ᵢ Xᵢ</span> of <span class="mono text-white">n</span> random variables with common mean <span class="mono text-white">μ</span> and variance <span class="mono text-white">σ²</span>. The general Bienaymé variance formula is:
+                    </p>
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg font-mono text-orange-300 text-sm text-center space-y-3">
+                        <div>Var(Sₙ) = ∑ᵢ Var(Xᵢ) + 2 ∑ᵢ&lt;ⱼ Cov(Xᵢ, Xⱼ)</div>
+                        <div class="w-1/2 mx-auto border-t border-slate-700"></div>
+                        <div class="text-xs text-slate-200">
+                            Under Independence (Cov = 0): &nbsp;&nbsp; Var(Sₙ) = n·σ² &nbsp;⟹&nbsp; SD(Sₙ) = σ·√n &nbsp;&nbsp;|&nbsp;&nbsp; Var(X̄ₙ) = σ²/n &nbsp;⟹&nbsp; SE(X̄ₙ) = σ/√n
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6 text-sm">
+                        <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 space-y-2">
+                            <h4 class="font-bold text-orange-300">Role in Probability & CLT</h4>
+                            <p class="text-xs text-slate-400">
+                                Because independent variances add linearly (<span class="mono">n·σ²</span>), standard deviations grow as <span class="mono text-white">√n</span>. Without rescaling, <span class="mono">X̄ₙ − μ</span> collapses to 0 (LLN) while <span class="mono">Sₙ − nμ</span> diverges to <span class="mono">±∞</span>. Multiplying <span class="mono">(X̄ₙ − μ)</span> by <span class="mono text-white">√n / σ</span> exactly cancels the <span class="mono">1/√n</span> decay, stabilizing the variance at 1 so a non-degenerate Gaussian limit emerges.
+                            </p>
+                        </div>
+                        <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 space-y-2">
+                            <h4 class="font-bold text-cyan-300">Role in Inference & Impact of Dependence (ρ &gt; 0)</h4>
+                            <p class="text-xs text-slate-400">
+                                In statistical inference, <span class="mono text-white">SE = σ/√n</span> governs confidence interval width (<span class="mono">X̄ₙ ± z · s/√n</span>): quadrupling <span class="mono">n</span> halves uncertainty. However, if observations share pairwise correlation <span class="mono text-white">ρ &gt; 0</span>, <span class="mono">Var(X̄ₙ) = σ²[ρ + (1 − ρ)/n] → ρσ² &gt; 0</span>. Precision hits a hard floor, and the effective independent sample drops to <span class="mono text-white">n_eff = n / [1 + (n − 1)ρ]</span>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= LAB 1: LLN, CLT & √n SIMULATOR ================= -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden fade-in" style="animation-delay: 0.1s;">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                <h2 class="text-xl font-bold text-white">Interactive Lab 1: LLN Trajectories, CLT & The <span class="mono text-orange-400">√n</span> Scaling Law</h2>
+                <span class="text-xs mono text-slate-400">1,500 Monte Carlo Ensembles</span>
+            </div>
+
+            <div class="p-6 grid lg:grid-cols-5 gap-6">
+                <!-- Controls -->
+                <div class="lg:col-span-1 space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Population Distribution</label>
+                        <select id="conv-dist" class="input-custom w-full rounded-lg p-2 mono text-xs cursor-pointer">
+                            <option value="exp">Exponential Exp(1) [Skewed]</option>
+                            <option value="uniform">Uniform U(0, 1) [Symmetric]</option>
+                            <option value="bernoulli">Bernoulli(0.3) [Discrete]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Sample Size (n)</label>
+                        <input type="number" id="conv-n" value="150" min="10" max="1000" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Pairwise Correlation ρ (0 = i.i.d.)</label>
+                        <input type="number" id="conv-rho" value="0.00" min="0" max="0.80" step="0.05" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                        <p class="text-[10px] text-slate-500 mt-1">Set ρ &gt; 0 to see how dependence breaks the 1/√n convergence!</p>
+                    </div>
+                    <button id="btn-run-conv" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-semibold py-3 px-4 rounded-lg shadow transition-all active:scale-95 text-sm">
+                        Simulate Convergence
+                    </button>
+                </div>
+
+                <!-- Canvases -->
+                <div class="lg:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xs font-semibold text-slate-300">LLN: Sample Mean X̄ₖ &amp; ±2σ/√k Envelope</h3>
+                            <span class="text-[11px] mono text-orange-400">Dashed = μ</span>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="canvas-lln"></canvas>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xs font-semibold text-slate-300">CLT: Zₙ = √n(X̄ₙ − μ)/σ vs N(0, 1)</h3>
+                            <span class="text-[11px] mono text-cyan-400">Curve = N(0,1)</span>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="canvas-clt"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="bg-slate-900 border-t border-slate-700 p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center font-mono">
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">i.i.d. Standard Error (σ/√n)</div>
+                        <div id="kpi-se-iid" class="text-lg text-orange-400 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Actual SD(X̄ₙ) with ρ</div>
+                        <div id="kpi-se-actual" class="text-lg text-cyan-400 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Effective Sample Size (n_eff)</div>
+                        <div id="kpi-neff" class="text-lg text-white font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Empirical Var(Zₙ)</div>
+                        <div id="kpi-var-z" class="text-lg text-slate-300 font-bold">-</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="w-full border-t-2 border-dashed border-slate-700 my-2"></div>
+
+        <!-- ================= PART 2: CONDITIONAL PROBABILITY & BAYESIAN INFERENCE ================= -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden fade-in" style="animation-delay: 0.2s;">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50">
+                <h2 class="text-2xl font-bold text-orange-400">Part 2: Conditional Probability, Bayes' Theorem & Statistical Inference</h2>
+            </div>
+            
+            <div class="p-8 text-slate-300 leading-relaxed space-y-8">
+                
+                <!-- 2.1 Conditional Probability & Bayes Formula -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-white">1. Conditional Probability & Bayes' Theorem</h3>
+                    <p class="text-sm text-slate-400">
+                        In <strong>probability theory</strong>, conditional probability <span class="mono text-white">P(A | B) = P(A ∩ B) / P(B)</span> (for <span class="mono">P(B) &gt; 0</span>) restricts the sample space to outcomes where <span class="mono">B</span> occurred. In <strong>statistics</strong>, we observe data <span class="mono text-white">D</span> generated by a model parameterized by an unknown quantity <span class="mono text-white">θ</span>. Bayes' theorem inverts the conditioning from the sampling model <span class="mono">P(D | θ)</span> to the inferential distribution <span class="mono">P(θ | D)</span>:
+                    </p>
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg font-mono text-orange-300 text-sm text-center space-y-3">
+                        <div>P(θ | D) = [ P(D | θ) · P(θ) ] / P(D) &nbsp;&nbsp;⟹&nbsp;&nbsp; Posterior ∝ Likelihood × Prior</div>
+                        <div class="w-1/2 mx-auto border-t border-slate-700"></div>
+                        <div class="text-xs text-slate-300">
+                            Evidence (Marginal Likelihood): &nbsp;&nbsp; P(D) = ∫ P(D | t) · P(t) dt &nbsp;&nbsp;(or ∑ⱼ P(D | Hⱼ)·P(Hⱼ) for discrete hypotheses)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2.2 The 3 Fundamental Components -->
+                <div class="grid md:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg space-y-2">
+                        <h4 class="font-bold text-amber-400">1. Prior Probability P(θ)</h4>
+                        <p class="text-xs text-slate-400">
+                            Represents our state of knowledge or uncertainty about <span class="mono text-white">θ</span> <em>before</em> seeing the current dataset <span class="mono">D</span>. It can encode historical benchmarks, domain constraints, or a weakly informative baseline.
+                        </p>
+                    </div>
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg space-y-2">
+                        <h4 class="font-bold text-cyan-400">2. Likelihood L(θ; D) = P(D | θ)</h4>
+                        <p class="text-xs text-slate-400">
+                            Evaluates the probability of observing the actual data <span class="mono">D</span> as a function of <span class="mono text-white">θ</span>. It acts as the data-driven weighting mechanism (note: <span class="mono">L(θ; D)</span> is not a density in <span class="mono">θ</span> and need not integrate to 1).
+                        </p>
+                    </div>
+                    <div class="bg-slate-900 p-5 border border-slate-700 rounded-lg space-y-2">
+                        <h4 class="font-bold text-orange-400">3. Posterior Probability P(θ | D)</h4>
+                        <p class="text-xs text-slate-400">
+                            The updated probability distribution over <span class="mono text-white">θ</span> after combining prior beliefs with empirical evidence, normalized by the marginal likelihood <span class="mono">P(D)</span> so that <span class="mono">∫ P(θ | D) dθ = 1</span>.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 2.3 Sequential Updating & Concrete Examples -->
+                <div class="grid md:grid-cols-2 gap-6 text-sm">
+                    <div class="bg-slate-900/60 p-5 rounded-lg border border-slate-700 space-y-3">
+                        <h4 class="font-bold text-white">Why Sequential Updating Is Central</h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Bayesian inference treats learning as a continuous recursive loop: when batches <span class="mono text-white">D₁</span> and <span class="mono text-white">D₂</span> arrive sequentially (conditionally independent given <span class="mono">θ</span>), yesterday's posterior becomes today's prior:
+                            <span class="mono block text-orange-300 my-2 text-center">P(θ | D₁, D₂) ∝ P(D₂ | θ) · P(θ | D₁)</span>
+                            Unlike frequentist inference—where <span class="mono">θ</span> is fixed and confidence intervals describe long-run coverage—Bayesian inference yields direct probability statements about <span class="mono">θ</span> (<strong>Credible Intervals</strong>).
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-5 rounded-lg border border-slate-700 space-y-3">
+                        <h4 class="font-bold text-white">Concrete Applications & Examples</h4>
+                        <ul class="text-xs text-slate-400 space-y-2 list-disc list-inside">
+                            <li><strong class="text-slate-200">Discrete Case (IDS Intrusion Alert):</strong> Suppose <span class="mono">P(Compromised) = 0.01</span> (Prior), sensitivity <span class="mono">P(Alert | Compromised) = 0.95</span>, and false positive rate <span class="mono">P(Alert | Clean) = 0.05</span>. By Bayes' rule, <span class="mono text-orange-300">P(Compromised | Alert) = (0.95×0.01) / (0.95×0.01 + 0.05×0.99) ≈ 16.1%</span>—preventing alert fatigue via base-rate awareness.</li>
+                            <li><strong class="text-slate-200">Continuous Case (Beta–Binomial Model):</strong> Estimating an unknown vulnerability rate <span class="mono">θ ∈ [0,1]</span> with <span class="mono">Prior ~ Beta(α₀, β₀)</span> and Binomial likelihood (<span class="mono">k</span> breaches in <span class="mono">n</span> audits) yields <span class="mono text-cyan-300">Posterior ~ Beta(α₀ + k, β₀ + n − k)</span>.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 2.4 Advantages, Limitations & Influence on Conclusions -->
+                <div class="bg-slate-900 p-5 rounded-lg border border-slate-700 border-l-4 border-l-orange-500 space-y-2 text-xs text-slate-300">
+                    <h4 class="font-bold text-white text-sm">Advantages, Limitations & Influence on Statistical Conclusions</h4>
+                    <p class="text-slate-400">
+                        • <strong>Advantages:</strong> Naturally incorporates historical domain knowledge; regularizes noisy estimates when sample size <span class="mono">n</span> is small; supports real-time sequential updating and intuitive uncertainty quantification.<br>
+                        • <strong>Limitations & Sensitivity:</strong> When <span class="mono">n</span> is small, an overly dogmatic or misspecified <strong>Prior</strong> can dominate the likelihood and bias conclusions. Conversely, as <span class="mono">n → ∞</span>, the likelihood overwhelms any proper prior (Bernstein–von Mises theorem), and the posterior concentrates around the true parameter at rate <span class="mono">1/√n</span>. Complex non-conjugate models also require numerical approximations (such as MCMC).
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= LAB 2: BAYESIAN UPDATING SIMULATOR ================= -->
+        <section class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden mb-8 fade-in" style="animation-delay: 0.3s;">
+            <div class="px-8 py-6 border-b border-slate-700 bg-slate-800/50 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                <h2 class="text-xl font-bold text-white">Interactive Lab 2: Bayesian Updating Simulator (Beta–Binomial Model)</h2>
+                <span class="text-xs mono text-orange-300">Posterior Beta(α₀ + k, β₀ + n − k)</span>
+            </div>
+
+            <div class="p-6 grid lg:grid-cols-5 gap-6">
+                <!-- Controls -->
+                <div class="lg:col-span-1 space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Prior Belief Preset</label>
+                        <select id="bayes-preset" class="input-custom w-full rounded-lg p-2 mono text-xs cursor-pointer">
+                            <option value="uniform">Uninformative Beta(1, 1)</option>
+                            <option value="skeptical">Low-Risk Prior Beta(2, 18)</option>
+                            <option value="moderate">Historical Prior Beta(8, 12)</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Prior α₀</label>
+                            <input type="number" id="bayes-a0" value="2" min="0.5" max="100" step="0.5" class="input-custom w-full rounded-lg p-2 mono text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Prior β₀</label>
+                            <input type="number" id="bayes-b0" value="18" min="0.5" max="100" step="0.5" class="input-custom w-full rounded-lg p-2 mono text-xs">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Observed Trials (n)</label>
+                        <input type="number" id="bayes-n" value="30" min="1" max="500" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Observed Successes / Events (k)</label>
+                        <input type="number" id="bayes-k" value="12" min="0" max="500" class="input-custom w-full rounded-lg p-2 mono text-sm">
+                    </div>
+                    <button id="btn-run-bayes" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-semibold py-3 px-4 rounded-lg shadow transition-all active:scale-95 text-sm">
+                        Update Posterior
+                    </button>
+                </div>
+
+                <!-- Chart -->
+                <div class="lg:col-span-4 flex flex-col justify-between space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span class="font-semibold text-slate-300">Prior vs. Scaled Likelihood vs. Posterior Density over θ ∈ [0, 1]</span>
+                        <div class="flex items-center gap-4 mono text-[11px]">
+                            <span class="text-slate-400">--- Prior p(θ)</span>
+                            <span class="text-cyan-400">--- Likelihood L(θ)</span>
+                            <span class="text-orange-400 font-bold">■ Posterior p(θ|D)</span>
+                        </div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="canvas-bayes"></canvas>
+                    </div>
+                    <p id="bayes-commentary" class="text-xs text-slate-400 bg-slate-900 p-3 rounded border border-slate-700"></p>
+                </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="bg-slate-900 border-t border-slate-700 p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center font-mono">
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Prior Mean α₀/(α₀+β₀)</div>
+                        <div id="kpi-prior-mean" class="text-lg text-slate-300 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Data MLE (k / n)</div>
+                        <div id="kpi-mle" class="text-lg text-cyan-400 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Posterior Mean E[θ|D]</div>
+                        <div id="kpi-post-mean" class="text-lg text-orange-400 font-bold">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">95% Credible Interval</div>
+                        <div id="kpi-ci" class="text-sm md:text-base text-white font-bold pt-0.5">-</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // UTILITIES: GAUSSIAN RNG & LOG-GAMMA
+        // ==========================================
+        function randNormal() {
+            let u = 0, v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        }
+
+        function logGamma(z) {
+            const c = [
+                76.18009172947146, -86.50532032941677, 24.01409824083091,
+                -1.231739572450155, 0.001208650973866179, -0.000005395239384953
+            ];
+            let x = z, y = z;
+            let tmp = x + 5.5;
+            tmp -= (x + 0.5) * Math.log(tmp);
+            let ser = 1.000000000190015;
+            for (let j = 0; j < 6; j++) ser += c[j] / ++y;
+            return -tmp + Math.log(2.5066282746310005 * ser / x);
+        }
+
+        function betaPDF(x, a, b) {
+            if (x <= 0 || x >= 1) return 0;
+            const logB = logGamma(a) + logGamma(b) - logGamma(a + b);
+            return Math.exp((a - 1) * Math.log(x) + (b - 1) * Math.log(1 - x) - logB);
+        }
+
+        // ==========================================
+        // LAB 1: LLN, CLT & √n SCALING SIMULATION
+        // ==========================================
+        function runConvergenceLab() {
+            const dist = document.getElementById("conv-dist").value;
+            const n = Math.max(10, Math.min(1000, parseInt(document.getElementById("conv-n").value) || 150));
+            const rho = Math.max(0, Math.min(0.85, parseFloat(document.getElementById("conv-rho").value) || 0));
+
+            let mu = 0, sigma = 1;
+            if (dist === "exp") { mu = 1.0; sigma = 1.0; }
+            else if (dist === "uniform") { mu = 0.5; sigma = Math.sqrt(1 / 12); }
+            else if (dist === "bernoulli") { mu = 0.3; sigma = Math.sqrt(0.3 * 0.7); }
+
+            // Transform a standard normal variable Z_i into the chosen marginal distribution
+            const mapFromStandardNormal = (z) => {
+                // Standard normal CDF via Abramowitz & Stegun
+                const p = 0.2316419;
+                const b1 = 0.319381530, b2 = -0.356563782, b3 = 1.781477937, b4 = -1.821255978, b5 = 1.330274429;
+                const az = Math.abs(z);
+                const t = 1 / (1 + p * az);
+                const pdf = Math.exp(-0.5 * az * az) / Math.sqrt(2 * Math.PI);
+                let u = 1.0 - pdf * (b1*t + b2*t**2 + b3*t**3 + b4*t**4 + b5*t**5);
+                if (z < 0) u = 1.0 - u;
+                u = Math.max(1e-12, Math.min(1 - 1e-12, u));
+
+                if (dist === "exp") return -Math.log(1 - u);
+                if (dist === "uniform") return u;
+                return u < 0.3 ? 1 : 0;
+            };
+
+            const numEnsembles = 1500;
+            const trajectories = [];
+            const finalMeans = [];
+            const zScores = [];
+
+            for (let ens = 0; ens < numEnsembles; ens++) {
+                // Common shock Z_common induces pairwise correlation rho
+                const zCommon = randNormal();
+                const sRho = Math.sqrt(rho);
+                const sOneMinusRho = Math.sqrt(1 - rho);
+
+                let runningMean = 0;
+                const path = ens < 25 ? [] : null;
+
+                for (let k = 1; k <= n; k++) {
+                    const zInd = randNormal();
+                    const zTotal = sRho * zCommon + sOneMinusRho * zInd;
+                    const xVal = rho === 0
+                        ? (dist === "exp" ? -Math.log(Math.random()) : dist === "uniform" ? Math.random() : (Math.random() < 0.3 ? 1 : 0))
+                        : mapFromStandardNormal(zTotal);
+
+                    runningMean += (xVal - runningMean) / k;
+                    if (path) path.push(runningMean);
+                }
+
+                if (path) trajectories.push(path);
+                finalMeans.push(runningMean);
+                zScores.push(Math.sqrt(n) * (runningMean - mu) / sigma);
+            }
+
+            // Compute empirical statistics of final sample means and Z_n
+            const meanOfMeans = finalMeans.reduce((a, b) => a + b, 0) / numEnsembles;
+            const varOfMeans = finalMeans.reduce((s, v) => s + (v - meanOfMeans) ** 2, 0) / (numEnsembles - 1);
+            const actualSD = Math.sqrt(varOfMeans);
+            const iidSE = sigma / Math.sqrt(n);
+            const nEff = n / (1 + (n - 1) * rho);
+
+            const meanZ = zScores.reduce((a, b) => a + b, 0) / numEnsembles;
+            const varZ = zScores.reduce((s, v) => s + (v - meanZ) ** 2, 0) / (numEnsembles - 1);
+
+            document.getElementById("kpi-se-iid").innerText = iidSE.toFixed(4);
+            document.getElementById("kpi-se-actual").innerText = actualSD.toFixed(4);
+            document.getElementById("kpi-neff").innerText = `${nEff.toFixed(1)} / ${n}`;
+            document.getElementById("kpi-var-z").innerText = varZ.toFixed(3);
+
+            drawLLNChart(trajectories, n, mu, sigma);
+            drawCLTChart(zScores);
+        }
+
+        function drawLLNChart(trajectories, n, mu, sigma) {
+            const canvas = document.getElementById("canvas-lln");
+            const ctx = canvas.getContext("2d");
+            const W = canvas.clientWidth, H = canvas.clientHeight;
+            canvas.width = W; canvas.height = H;
+            ctx.clearRect(0, 0, W, H);
+
+            const yRange = Math.max(2.5 * sigma, 0.8);
+            const yMin = mu - yRange, yMax = mu + yRange;
+            const toY = (val) => H - ((val - yMin) / (yMax - yMin)) * H;
+            const toX = (k) => ((k - 1) / Math.max(1, n - 1)) * W;
+
+            // ± 2σ/√k theoretical i.i.d. envelope
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(56, 189, 248, 0.55)";
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 1.5;
+            for (let k = 1; k <= n; k++) {
+                const env = 2 * sigma / Math.sqrt(k);
+                const x = toX(k), y = toY(mu + env);
+                if (k === 1) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            ctx.beginPath();
+            for (let k = 1; k <= n; k++) {
+                const env = 2 * sigma / Math.sqrt(k);
+                const x = toX(k), y = toY(mu - env);
+                if (k === 1) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // True mean line
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(249, 115, 22, 0.9)";
+            ctx.setLineDash([6, 4]);
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, toY(mu));
+            ctx.lineTo(W, toY(mu));
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Sample trajectories
+            ctx.strokeStyle = "rgba(251, 146, 60, 0.28)";
+            ctx.lineWidth = 1.2;
+            for (const path of trajectories) {
+                ctx.beginPath();
+                for (let i = 0; i < path.length; i++) {
+                    const x = toX(i + 1), y = toY(path[i]);
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        function drawCLTChart(zScores) {
+            const canvas = document.getElementById("canvas-clt");
+            const ctx = canvas.getContext("2d");
+            const W = canvas.clientWidth, H = canvas.clientHeight;
+            canvas.width = W; canvas.height = H;
+            ctx.clearRect(0, 0, W, H);
+
+            const xMin = -4, xMax = 4;
+            const bins = 32;
+            const binW = (xMax - xMin) / bins;
+            const counts = new Array(bins).fill(0);
+
+            for (const z of zScores) {
+                if (z >= xMin && z < xMax) {
+                    const idx = Math.floor((z - xMin) / binW);
+                    counts[idx]++;
+                }
+            }
+
+            const densities = counts.map(c => c / (zScores.length * binW));
+            const maxY = Math.max(0.48, ...densities) * 1.1;
+
+            const toX = (x) => ((x - xMin) / (xMax - xMin)) * W;
+            const toY = (d) => H - (d / maxY) * H;
+
+            // Histogram bars
+            ctx.fillStyle = "rgba(249, 115, 22, 0.42)";
+            ctx.strokeStyle = "rgba(251, 146, 60, 0.85)";
+            ctx.lineWidth = 1;
+            for (let i = 0; i < bins; i++) {
+                const bx = toX(xMin + i * binW);
+                const bw = (binW / (xMax - xMin)) * W;
+                const by = toY(densities[i]);
+                ctx.fillRect(bx, by, bw, H - by);
+                ctx.strokeRect(bx, by, bw, H - by);
+            }
+
+            // Standard Normal N(0,1) PDF overlay
+            ctx.beginPath();
+            ctx.strokeStyle = "#38bdf8";
+            ctx.lineWidth = 2.2;
+            for (let px = 0; px <= W; px++) {
+                const x = xMin + (px / W) * (xMax - xMin);
+                const pdf = Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+                const py = toY(pdf);
+                if (px === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+        }
+
+        // ==========================================
+        // LAB 2: BAYESIAN UPDATING (BETA-BINOMIAL)
+        // ==========================================
+        function runBayesianLab() {
+            const a0 = Math.max(0.1, parseFloat(document.getElementById("bayes-a0").value) || 1);
+            const b0 = Math.max(0.1, parseFloat(document.getElementById("bayes-b0").value) || 1);
+            const n = Math.max(1, parseInt(document.getElementById("bayes-n").value) || 30);
+            let k = Math.max(0, parseInt(document.getElementById("bayes-k").value) || 0);
+            if (k > n) { k = n; document.getElementById("bayes-k").value = n; }
+
+            const aPost = a0 + k;
+            const bPost = b0 + (n - k);
+
+            const priorMean = a0 / (a0 + b0);
+            const mle = k / n;
+            const postMean = aPost / (aPost + bPost);
+
+            // Compute grid for Prior, Likelihood (scaled), and Posterior
+            const steps = 300;
+            const xs = [], priorVals = [], postVals = [], likVals = [];
+            let maxDensity = 0;
+            let maxLik = 0;
+
+            for (let i = 1; i < steps; i++) {
+                const theta = i / steps;
+                const pVal = betaPDF(theta, a0, b0);
+                const postVal = betaPDF(theta, aPost, bPost);
+                // Log-likelihood shifted for numerical stability
+                const logL = k * Math.log(theta) + (n - k) * Math.log(1 - theta);
+                xs.push(theta);
+                priorVals.push(pVal);
+                postVals.push(postVal);
+                likVals.push(logL);
+                if (pVal > maxDensity) maxDensity = pVal;
+                if (postVal > maxDensity) maxDensity = postVal;
+                if (logL > maxLik) maxLik = logL;
+            }
+
+            // Rescale likelihood curve peak to 80% of maxDensity for clear visual comparison
+            const scaledLik = likVals.map(ll => Math.exp(ll - maxLik) * (maxDensity * 0.8));
+
+            // Approximate 95% Credible Interval via numerical CDF on grid
+            let cumArea = 0;
+            const dx = 1 / steps;
+            let ciLow = 0, ciHigh = 1, foundLow = false;
+            for (let i = 0; i < xs.length; i++) {
+                cumArea += postVals[i] * dx;
+                if (!foundLow && cumArea >= 0.025) { ciLow = xs[i]; foundLow = true; }
+                if (cumArea >= 0.975) { ciHigh = xs[i]; break; }
+            }
+
+            document.getElementById("kpi-prior-mean").innerText = priorMean.toFixed(4);
+            document.getElementById("kpi-mle").innerText = mle.toFixed(4);
+            document.getElementById("kpi-post-mean").innerText = postMean.toFixed(4);
+            document.getElementById("kpi-ci").innerText = `[${ciLow.toFixed(3)}, ${ciHigh.toFixed(3)}]`;
+
+            const priorWeight = ((a0 + b0) / (a0 + b0 + n) * 100).toFixed(1);
+            const dataWeight = (100 - parseFloat(priorWeight)).toFixed(1);
+            document.getElementById("bayes-commentary").innerHTML =
+                `The Posterior mean (<span class="mono text-orange-400 font-bold">${postMean.toFixed(4)}</span>) is a precision-weighted compromise between the Prior mean (<span class="mono text-slate-200">${priorMean.toFixed(4)}</span>, weight <strong>${priorWeight}%</strong>) and the observed MLE (<span class="mono text-cyan-300">${mle.toFixed(4)}</span>, weight <strong>${dataWeight}%</strong>).`;
+
+            drawBayesChart(xs, priorVals, scaledLik, postVals, maxDensity);
+        }
+
+        function drawBayesChart(xs, priorVals, scaledLik, postVals, maxDensity) {
+            const canvas = document.getElementById("canvas-bayes");
+            const ctx = canvas.getContext("2d");
+            const W = canvas.clientWidth, H = canvas.clientHeight;
+            canvas.width = W; canvas.height = H;
+            ctx.clearRect(0, 0, W, H);
+
+            const padB = 24, padT = 16;
+            const plotH = H - padB - padT;
+            const yMax = Math.max(1.5, maxDensity * 1.12);
+
+            const toX = (theta) => theta * W;
+            const toY = (val) => padT + plotH * (1 - Math.min(val, yMax) / yMax);
+
+            // X-axis ticks
+            ctx.fillStyle = "#64748b";
+            ctx.font = "11px JetBrains Mono";
+            ctx.textAlign = "center";
+            [0.1, 0.25, 0.5, 0.75, 0.9].forEach(t => {
+                ctx.fillText(t.toFixed(2), toX(t), H - 6);
+            });
+
+            // 1. Posterior fill + curve (Orange)
+            ctx.beginPath();
+            ctx.moveTo(toX(xs[0]), padT + plotH);
+            xs.forEach((x, i) => ctx.lineTo(toX(x), toY(postVals[i])));
+            ctx.lineTo(toX(xs[xs.length - 1]), padT + plotH);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(249, 115, 22, 0.30)";
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.strokeStyle = "#f97316";
+            ctx.lineWidth = 2.5;
+            xs.forEach((x, i) => {
+                if (i === 0) ctx.moveTo(toX(x), toY(postVals[i]));
+                else ctx.lineTo(toX(x), toY(postVals[i]));
+            });
+            ctx.stroke();
+
+            // 2. Scaled Likelihood curve (Cyan dashed)
+            ctx.beginPath();
+            ctx.strokeStyle = "#38bdf8";
+            ctx.setLineDash([5, 4]);
+            ctx.lineWidth = 2;
+            xs.forEach((x, i) => {
+                if (i === 0) ctx.moveTo(toX(x), toY(scaledLik[i]));
+                else ctx.lineTo(toX(x), toY(scaledLik[i]));
+            });
+            ctx.stroke();
+
+            // 3. Prior curve (Slate dashed)
+            ctx.beginPath();
+            ctx.strokeStyle = "#94a3b8";
+            ctx.setLineDash([3, 3]);
+            ctx.lineWidth = 1.8;
+            xs.forEach((x, i) => {
+                if (i === 0) ctx.moveTo(toX(x), toY(priorVals[i]));
+                else ctx.lineTo(toX(x), toY(priorVals[i]));
+            });
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Event Listeners
+        document.getElementById("btn-run-conv").addEventListener("click", runConvergenceLab);
+        document.getElementById("conv-dist").addEventListener("change", runConvergenceLab);
+
+        document.getElementById("bayes-preset").addEventListener("change", (e) => {
+            const val = e.target.value;
+            if (val === "uniform") {
+                document.getElementById("bayes-a0").value = 1;
+                document.getElementById("bayes-b0").value = 1;
+            } else if (val === "skeptical") {
+                document.getElementById("bayes-a0").value = 2;
+                document.getElementById("bayes-b0").value = 18;
+            } else if (val === "moderate") {
+                document.getElementById("bayes-a0").value = 8;
+                document.getElementById("bayes-b0").value = 12;
+            }
+            runBayesianLab();
+        });
+        document.getElementById("btn-run-bayes").addEventListener("click", runBayesianLab);
+
+        window.addEventListener("resize", () => {
+            runConvergenceLab();
+            runBayesianLab();
+        });
+
+        window.addEventListener("DOMContentLoaded", () => {
+            runConvergenceLab();
+            runBayesianLab();
+        });
+    </script>
+</body>
+</html>
